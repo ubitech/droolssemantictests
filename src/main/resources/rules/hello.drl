@@ -1,0 +1,13 @@
+package com.javacodegeeks.drools;
+
+rule "Superclass Instance Inference"
+when
+
+    $instance: InstanceOfClazz( clazz.parent !=null   ) 
+    && not ( exists(  InstanceOfClazz( name==$instance.name , clazz == clazz.parent ) ) )
+then
+    System.out.println( "Superclass Inference--> New instance has to be created with name: "+ $instance.getName() +" and class: "+$instance.getClazz().getParent().getName() );
+    InstanceOfClazz newinstance = new InstanceOfClazz($instance.getName(),$instance.getClazz().getParent());
+    insert(newinstance);
+end
+
