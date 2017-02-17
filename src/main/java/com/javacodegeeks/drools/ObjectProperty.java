@@ -9,12 +9,21 @@ public class ObjectProperty {
     private String name;
     private Clazz domain;
     private Clazz range;
-
+    private ObjectProperty parent;
+    
     public ObjectProperty(String name, Clazz domain, Clazz range) {
         this.name = name;
         this.domain = domain;
         this.range = range;
+        this.parent = null;
     }    
+
+    public ObjectProperty(String name, Clazz domain, Clazz range, ObjectProperty parent) {
+        this.name = name;
+        this.domain = domain;
+        this.range = range;
+        this.parent = parent;
+    }   
     
     public String getName() {
         return name;
@@ -40,9 +49,17 @@ public class ObjectProperty {
         this.range = range;
     }
 
+    public ObjectProperty getParent() {
+        return parent;
+    }
+
+    public void setParent(ObjectProperty parent) {
+        this.parent = parent;
+    }        
+
     @Override
     public String toString() {
-        return "ObjectProperty{" + "name=" + name + ", domain=" + domain + ", range=" + range + '}';
+        return "ObjectProperty{" + "name=" + name + ", domain=" + domain + ", range=" + range + ", parent=" + parent + '}';
     }
     
 }

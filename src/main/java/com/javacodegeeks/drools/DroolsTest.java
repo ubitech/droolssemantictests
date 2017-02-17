@@ -19,42 +19,61 @@ public class DroolsTest {
             KieContainer kContainer = ks.getKieClasspathContainer();
             KieSession kSession = kContainer.newKieSession("ksession-rules");
             //Classes
-            Clazz area = new Clazz("area",null);
-            Clazz subarea = new Clazz("subarea",area);
-            Clazz subsubarea = new Clazz("subsubarea",subarea);
+            Clazz area = new Clazz("Area",null);
+            Clazz continent = new Clazz("continent",area);
+            Clazz country = new Clazz("country",area);
+            Clazz city = new Clazz("city",area);
+            Clazz region = new Clazz("region",area);
             Clazz requestor = new Clazz("Requestor",null);            
             Clazz developer = new Clazz("Developer",requestor);            
             Clazz ipaddress = new Clazz("IP Address",null);            
             Clazz blacklistedipaddress = new Clazz("Blacklisted IP Address",ipaddress);            
             //instances            
-            InstanceOfClazz greece = new InstanceOfClazz("greece", area);
-            InstanceOfClazz athens = new InstanceOfClazz("athens", subarea);
-            InstanceOfClazz filadelfeia = new InstanceOfClazz("filadelfeia", subsubarea);           
+            InstanceOfClazz africa = new InstanceOfClazz("Africa", continent);
+            InstanceOfClazz europe = new InstanceOfClazz("Europe", continent);
+            InstanceOfClazz greece = new InstanceOfClazz("Greece", country);
+            InstanceOfClazz italy = new InstanceOfClazz("Italy", country);
+            InstanceOfClazz athens = new InstanceOfClazz("Athens", city);
+            InstanceOfClazz volos = new InstanceOfClazz("Volos", city);
+            InstanceOfClazz milan = new InstanceOfClazz("Milan", city);
+            InstanceOfClazz rome = new InstanceOfClazz("Rome", city);
+            InstanceOfClazz filadelfeia = new InstanceOfClazz("filadelfeia", region);           
             InstanceOfClazz reqinstance = new InstanceOfClazz("reqinstance",requestor);    
             InstanceOfClazz devinstance = new InstanceOfClazz("devinstance",developer);    
             InstanceOfClazz localhost = new InstanceOfClazz("127.0.0.1",ipaddress);    
             InstanceOfClazz iccsip = new InstanceOfClazz("147.102.23.1",ipaddress);    
             InstanceOfClazz ubiip = new InstanceOfClazz("192.168.1.1",blacklistedipaddress);    
+
             //object properties
-            ObjectProperty requestorhasSubarea = new ObjectProperty("hasSubarea",requestor,subarea);
+            ObjectProperty isLocatedAt = new ObjectProperty("isLocatedAt",area,area);
+//            ObjectProperty requestorhasSubarea = new ObjectProperty("isLocatedAt",region,city);            
             ObjectProperty requestorhasIPAddress = new ObjectProperty("hasIPAddress",requestor,ipaddress);
             
             //triples
 //            KnowledgeTriple t1 = new KnowledgeTriple(panagiotis, requestorhasSubarea, athens);
             KnowledgeTriple t2 = new KnowledgeTriple(devinstance, requestorhasIPAddress, ubiip);
+            KnowledgeTriple t3 = new KnowledgeTriple(greece, isLocatedAt, europe);
+            KnowledgeTriple t4 = new KnowledgeTriple(athens, isLocatedAt, greece);
             
             //add Model to Production Memory
             //classes
-            kSession.insert(area);
-            kSession.insert(subarea);            
-            kSession.insert(subsubarea);            
+            kSession.insert(continent);
+            kSession.insert(country);
+            kSession.insert(city);            
+            kSession.insert(region);            
             kSession.insert(requestor);              
             kSession.insert(developer);
             kSession.insert(ipaddress);      
             kSession.insert(blacklistedipaddress);      
-            //instances
+            //instances            
+            kSession.insert(africa);            
+            kSession.insert(europe);            
             kSession.insert(greece);            
+            kSession.insert(italy);            
             kSession.insert(athens);            
+            kSession.insert(volos);            
+            kSession.insert(milan);            
+            kSession.insert(rome);            
             kSession.insert(filadelfeia);            
             kSession.insert(reqinstance);       
             kSession.insert(devinstance);       
@@ -62,11 +81,15 @@ public class DroolsTest {
             kSession.insert(iccsip);       
             kSession.insert(ubiip);       
             //object properties
-            kSession.insert(requestorhasSubarea);
+            kSession.insert(isLocatedAt);
+//            kSession.insert(requestorhasSubarea);
             kSession.insert(requestorhasIPAddress);
+            
             //triples
 //            kSession.insert(t1);                   
             kSession.insert(t2);                   
+            kSession.insert(t3);                   
+            kSession.insert(t4);                   
             
             //fire
             kSession.fireAllRules();
