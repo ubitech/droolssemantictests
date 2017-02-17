@@ -27,8 +27,8 @@ end
 rule "Knowledge Expansion through Range Generalization (make use of Supertype inheritance)"
 when
     $triple: KnowledgeTriple( ) 
-    && not ( exists(  KnowledgeTriple( predicate == $triple.predicate , subject == $triple.subject, object.name == $triple.object.name , object.clazz != $triple.object.clazz ) ) )
+    not ( exists(  KnowledgeTriple( predicate == $triple.predicate , subject == $triple.subject, object.name == $triple.object.name , object.clazz != $triple.object.clazz ) ) )
 then
-    System.out.println( "Knowledge Expansion through Range Generalization --> New Triple has to be created " );
+    System.out.println( "Knowledge Expansion through Range Generalization --> New Triple has to be created Predicate:"+$triple.getPredicate().getName()+" Subject: "+$triple.getSubject().getName() +" Object: "+$triple.getObject().getName() + " "+$triple.getObject().getClazz().getName() );
 
 end
