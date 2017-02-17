@@ -4,7 +4,7 @@ rule "Supertype Inheritance Inference"
 when
 
     $instance: InstanceOfClazz( clazz.parent !=null   ) 
-    && not ( exists(  InstanceOfClazz( name==$instance.name , clazz == clazz.parent ) ) )
+    not ( exists(  InstanceOfClazz( name==$instance.name , clazz == clazz.parent ) ) )
 then
     System.out.println( "Supertype Inheritance --> New InstanceOfClass has to be created with name: "+ $instance.getName() +" and class: "+$instance.getClazz().getParent().getName() );
     InstanceOfClazz newinstanceofclazz = new InstanceOfClazz($instance.getName(),$instance.getClazz().getParent());
@@ -16,7 +16,7 @@ rule "Class Transitiveness Inference"
 when
 
     $clazz: Clazz( parent != null , parent.parent != null  ) 
-    && not ( exists(  Clazz( name==$clazz.name , parent == $clazz.parent.parent ) ) )
+    not ( exists(  Clazz( name==$clazz.name , parent == $clazz.parent.parent ) ) )
 then
     System.out.println( "Class Transitiveness --> New Class has to be created with name: "+ $clazz.getName() +" and parent: "+$clazz.getParent().getParent().getName() );
     Clazz newclazz = new Clazz($clazz.getName(),$clazz.getParent().getParent());
@@ -26,9 +26,42 @@ end
 
 rule "Knowledge Expansion through Range Generalization (make use of Supertype inheritance)"
 when
-    $triple: KnowledgeTriple( ) 
-    not ( exists(  KnowledgeTriple( predicate == $triple.predicate , subject == $triple.subject, object.name == $triple.object.name , object.clazz != $triple.object.clazz ) ) )
+    $triple: KnowledgeTriple() 
+    not ( 
+        exists(             
+            $newtriple: KnowledgeTriple( predicate == $triple.predicate , subject == $triple.subject, object.name == $triple.object.name , object.clazz != $triple.object.clazz  ) 
+        ) 
+    )
+
 then
     System.out.println( "Knowledge Expansion through Range Generalization --> New Triple has to be created Predicate:"+$triple.getPredicate().getName()+" Subject: "+$triple.getSubject().getName() +" Object: "+$triple.getObject().getName() + " "+$triple.getObject().getClazz().getName() );
+end
 
+
+rule "Debug-PrintAllClasses"
+when
+    $clazz: Clazz() 
+then
+    System.out.println( "Clazz --> "+$clazz  );
+end
+
+rule "Debug-PrintAllInstances"
+when
+    $instanceofclass: InstanceOfClazz() 
+then
+    System.out.println( "InstanceOfClazz --> "+$instanceofclass  );
+end
+
+rule "Debug-PrintAllObjectProperties"
+when
+    $objectproperty: ObjectProperty() 
+then
+    System.out.println( "ObjectProperty --> "+$objectproperty  );
+end
+
+rule "Debug-PrintAllTriples"
+when
+    $triple: KnowledgeTriple() 
+then
+    System.out.println( "KnowledgeTriple --> "+$triple  );
 end

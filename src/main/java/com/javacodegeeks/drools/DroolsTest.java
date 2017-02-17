@@ -66,8 +66,8 @@ public class DroolsTest {
             
             //fire
             kSession.fireAllRules();
-//            logger.info("I will fire again!");
-//            kSession.fireAllRules();
+            logger.info("---> I will fire again!");
+            kSession.fireAllRules();
             
         } catch (Exception e) {
             e.printStackTrace();
