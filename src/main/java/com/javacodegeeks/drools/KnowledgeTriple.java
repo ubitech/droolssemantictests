@@ -39,7 +39,10 @@ public class KnowledgeTriple {
     public void setObject(InstanceOfClazz object) {
         this.object = object;
     }
-    
-    
+
+    @Override
+    public String toString() {
+        return "KnowledgeTriple{" + "subject=" + subject + ", predicate=" + predicate + ", object=" + object + '}';
+    }    
     
 }

@@ -24,13 +24,11 @@ then
 end
 
 
-rule "Knowledge "
+rule "Knowledge Expansion through Range Generalization (make use of Supertype inheritance)"
 when
-
-    $clazz: Clazz( parent != null , parent.parent != null  ) 
-    && not ( exists(  Clazz( name==$clazz.name , parent == $clazz.parent.parent ) ) )
+    $triple: KnowledgeTriple( ) 
+    && not ( exists(  KnowledgeTriple( predicate == $triple.predicate , subject == $triple.subject, object.name == $triple.object.name , object.clazz != $triple.object.clazz ) ) )
 then
-    System.out.println( "Class Transitiveness --> New Class has to be created with name: "+ $clazz.getName() +" and parent: "+$clazz.getParent().getParent().getName() );
-    Clazz newclazz = new Clazz($clazz.getName(),$clazz.getParent().getParent());
-    insert(newclazz);
+    System.out.println( "Knowledge Expansion through Range Generalization --> New Triple has to be created " );
+
 end

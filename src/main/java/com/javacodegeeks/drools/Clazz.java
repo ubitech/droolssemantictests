@@ -29,5 +29,12 @@ public class Clazz {
     public void setParent(Clazz parent) {
         this.parent = parent;
     }
+
+    @Override
+    public String toString() {
+        return "Clazz{" + "name=" + name + ", parent=" + parent + '}';
+    }
         
+    
+    
 }

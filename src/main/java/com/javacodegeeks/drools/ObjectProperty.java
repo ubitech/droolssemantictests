@@ -39,7 +39,10 @@ public class ObjectProperty {
     public void setRange(Clazz range) {
         this.range = range;
     }
-    
-    
+
+    @Override
+    public String toString() {
+        return "ObjectProperty{" + "name=" + name + ", domain=" + domain + ", range=" + range + '}';
+    }
     
 }

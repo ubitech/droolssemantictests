@@ -29,5 +29,10 @@ public class InstanceOfClazz {
     public void setClazz(Clazz clazz) {
         this.clazz = clazz;
     }    
+
+    @Override
+    public String toString() {
+        return "InstanceOfClazz{" + "name=" + name + ", clazz=" + clazz + '}';
+    }        
     
 }

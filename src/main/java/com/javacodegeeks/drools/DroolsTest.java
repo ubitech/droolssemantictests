@@ -18,33 +18,51 @@ public class DroolsTest {
             KieServices ks = KieServices.Factory.get();
             KieContainer kContainer = ks.getKieClasspathContainer();
             KieSession kSession = kContainer.newKieSession("ksession-rules");
-
+            //Classes
             Clazz area = new Clazz("area",null);
             Clazz subarea = new Clazz("subarea",area);
             Clazz subsubarea = new Clazz("subsubarea",subarea);
-            Clazz subsubsubarea = new Clazz("subsubsubarea",area);
+            Clazz requestor = new Clazz("Requestor",null);            
+            Clazz ipaddress = new Clazz("IP Address",null);            
+            Clazz blacklistedipaddress = new Clazz("Blacklisted IP Address",ipaddress);            
+            //instances            
             InstanceOfClazz greece = new InstanceOfClazz("greece", area);
             InstanceOfClazz athens = new InstanceOfClazz("athens", subarea);
-            InstanceOfClazz filadelfeia = new InstanceOfClazz("filadelfeia", subsubarea);
+            InstanceOfClazz filadelfeia = new InstanceOfClazz("filadelfeia", subsubarea);           
+            InstanceOfClazz panagiotis = new InstanceOfClazz("panagiotis",requestor);    
+            InstanceOfClazz localhost = new InstanceOfClazz("127.0.0.1",ipaddress);    
+            InstanceOfClazz iccsip = new InstanceOfClazz("147.102.23.1",ipaddress);    
+            InstanceOfClazz ubiip = new InstanceOfClazz("192.168.1.1",blacklistedipaddress);    
+            //object properties
+            ObjectProperty requestorhasSubarea = new ObjectProperty("hasSubarea",requestor,subarea);
+            ObjectProperty requestorhasIPAddress = new ObjectProperty("hasIPAddress",requestor,ipaddress);
             
-            Clazz requestor = new Clazz("Requestor",null);            
-            InstanceOfClazz panagiotis = new InstanceOfClazz("panagiotis",requestor);            
-            ObjectProperty requestorhasLocation = new ObjectProperty("hasLocation",requestor,subarea);
+            //triples
+            KnowledgeTriple t1 = new KnowledgeTriple(panagiotis, requestorhasSubarea, athens);
+            KnowledgeTriple t2 = new KnowledgeTriple(panagiotis, requestorhasIPAddress, ubiip);
             
-            KnowledgeTriple k1 = new KnowledgeTriple(panagiotis, requestorhasLocation, athens);
-            
-            //add knowledge
+            //add Model to Production Memory
+            //classes
             kSession.insert(area);
             kSession.insert(subarea);            
             kSession.insert(subsubarea);            
-            kSession.insert(subsubsubarea);            
+            kSession.insert(requestor);              
+            kSession.insert(ipaddress);      
+            kSession.insert(blacklistedipaddress);      
+            //instances
             kSession.insert(greece);            
             kSession.insert(athens);            
-            kSession.insert(filadelfeia);       
-            kSession.insert(requestor);       
+            kSession.insert(filadelfeia);            
             kSession.insert(panagiotis);       
-            kSession.insert(requestorhasLocation);                   
-            kSession.insert(k1);                   
+            kSession.insert(localhost);       
+            kSession.insert(iccsip);       
+            kSession.insert(ubiip);       
+            //object properties
+            kSession.insert(requestorhasSubarea);
+            kSession.insert(requestorhasIPAddress);
+            //triples
+            kSession.insert(t1);                   
+            kSession.insert(t2);                   
             
             //fire
             kSession.fireAllRules();
