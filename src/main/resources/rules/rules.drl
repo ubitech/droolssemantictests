@@ -1,0 +1,36 @@
+package com.javacodegeeks.drools;
+
+rule "Supertype Inheritance Inference"
+when
+
+    $instance: InstanceOfClazz( clazz.parent !=null   ) 
+    && not ( exists(  InstanceOfClazz( name==$instance.name , clazz == clazz.parent ) ) )
+then
+    System.out.println( "Supertype Inheritance --> New InstanceOfClass has to be created with name: "+ $instance.getName() +" and class: "+$instance.getClazz().getParent().getName() );
+    InstanceOfClazz newinstanceofclazz = new InstanceOfClazz($instance.getName(),$instance.getClazz().getParent());
+    insert(newinstanceofclazz);
+end
+
+
+rule "Class Transitiveness Inference"
+when
+
+    $clazz: Clazz( parent != null , parent.parent != null  ) 
+    && not ( exists(  Clazz( name==$clazz.name , parent == $clazz.parent.parent ) ) )
+then
+    System.out.println( "Class Transitiveness --> New Class has to be created with name: "+ $clazz.getName() +" and parent: "+$clazz.getParent().getParent().getName() );
+    Clazz newclazz = new Clazz($clazz.getName(),$clazz.getParent().getParent());
+    insert(newclazz);
+end
+
+
+rule "Knowledge "
+when
+
+    $clazz: Clazz( parent != null , parent.parent != null  ) 
+    && not ( exists(  Clazz( name==$clazz.name , parent == $clazz.parent.parent ) ) )
+then
+    System.out.println( "Class Transitiveness --> New Class has to be created with name: "+ $clazz.getName() +" and parent: "+$clazz.getParent().getParent().getName() );
+    Clazz newclazz = new Clazz($clazz.getName(),$clazz.getParent().getParent());
+    insert(newclazz);
+end

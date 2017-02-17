@@ -21,18 +21,35 @@ public class DroolsTest {
 
             Clazz area = new Clazz("area",null);
             Clazz subarea = new Clazz("subarea",area);
-            InstanceOfClazz instanceofclass1 = new InstanceOfClazz("greece", area);
-            InstanceOfClazz instanceofclass2 = new InstanceOfClazz("athens", subarea);
+            Clazz subsubarea = new Clazz("subsubarea",subarea);
+            Clazz subsubsubarea = new Clazz("subsubsubarea",area);
+            InstanceOfClazz greece = new InstanceOfClazz("greece", area);
+            InstanceOfClazz athens = new InstanceOfClazz("athens", subarea);
+            InstanceOfClazz filadelfeia = new InstanceOfClazz("filadelfeia", subsubarea);
+            
+            Clazz requestor = new Clazz("Requestor",null);            
+            InstanceOfClazz panagiotis = new InstanceOfClazz("panagiotis",requestor);            
+            ObjectProperty requestorhasLocation = new ObjectProperty("hasLocation",requestor,subarea);
+            
+            KnowledgeTriple k1 = new KnowledgeTriple(panagiotis, requestorhasLocation, athens);
             
             //add knowledge
             kSession.insert(area);
             kSession.insert(subarea);            
-            kSession.insert(instanceofclass1);            
-            kSession.insert(instanceofclass2);            
+            kSession.insert(subsubarea);            
+            kSession.insert(subsubsubarea);            
+            kSession.insert(greece);            
+            kSession.insert(athens);            
+            kSession.insert(filadelfeia);       
+            kSession.insert(requestor);       
+            kSession.insert(panagiotis);       
+            kSession.insert(requestorhasLocation);                   
+            kSession.insert(k1);                   
+            
             //fire
             kSession.fireAllRules();
-            logger.info("I will fire again!");
-            kSession.fireAllRules();
+//            logger.info("I will fire again!");
+//            kSession.fireAllRules();
             
         } catch (Exception e) {
             e.printStackTrace();
