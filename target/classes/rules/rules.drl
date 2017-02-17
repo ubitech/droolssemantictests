@@ -29,18 +29,33 @@ when
     $triple: KnowledgeTriple() 
     $objectinstance: InstanceOfClazz(name == $triple.object.name, clazz != $triple.object.clazz )
     not ( 
-        exists(             
+        exists(      
             $newtriple: KnowledgeTriple( predicate == $triple.predicate , subject == $triple.subject, object.name == $triple.object.name , object.clazz != $triple.object.clazz  ) 
         ) 
     )
-
 then
-    System.out.println( "Knowledge Expansion through Range Generalization --> New Triple has to be created Predicate:"+$triple.getPredicate().getName()+" Subject: "+$triple.getSubject().getName() +" Object: "+$objectinstance.getName() + " "+$objectinstance.getClazz().getName() );
+    System.out.println( "Knowledge Expansion through Range Generalization --> New Triple has to be created Predicate:"+$triple.getPredicate().getName()+" Subject: "+$triple.getSubject().getName() +"( "+$triple.getSubject().getClazz().getName()+" )"+" Object: "+$objectinstance.getName() + " ( "+$objectinstance.getClazz().getName()+" )" );
     KnowledgeTriple newtriple = new KnowledgeTriple( $triple.getSubject() , $triple.getPredicate() , $objectinstance );
     insert(newtriple);
 end
 
 
+rule "Knowledge Expansion through Domain Generalization (make use of Supertype inheritance)"
+when
+    $triple: KnowledgeTriple() 
+    $subjectinstance: InstanceOfClazz(name == $triple.subject.name, clazz != $triple.subject.clazz )
+    not ( 
+        exists(      
+            $newtriple: KnowledgeTriple( predicate == $triple.predicate , object == $triple.object, subject.name == $triple.subject.name , subject.clazz != $triple.subject.clazz  ) 
+        ) 
+    )
+then
+    System.out.println( "Knowledge Expansion through Domain Generalization --> New Triple has to be created Predicate:"+$triple.getPredicate().getName()+" Subject: "+$subjectinstance.getName() +"("+$subjectinstance.getClazz().getName()+")"+" Object: "+$triple.getObject().getName() +"("+$triple.getObject().getClazz().getName()+")" );
+    KnowledgeTriple newtriple = new KnowledgeTriple( $subjectinstance , $triple.getPredicate() , $triple.getObject() );
+    insert(newtriple);
+end
+
+/*
 rule "Debug-PrintAllClasses"
 when
     $clazz: Clazz() 
@@ -68,3 +83,4 @@ when
 then
     System.out.println( "KnowledgeTriple --> "+$triple  );
 end
+*/

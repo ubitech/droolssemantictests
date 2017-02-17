@@ -23,13 +23,15 @@ public class DroolsTest {
             Clazz subarea = new Clazz("subarea",area);
             Clazz subsubarea = new Clazz("subsubarea",subarea);
             Clazz requestor = new Clazz("Requestor",null);            
+            Clazz developer = new Clazz("Developer",requestor);            
             Clazz ipaddress = new Clazz("IP Address",null);            
             Clazz blacklistedipaddress = new Clazz("Blacklisted IP Address",ipaddress);            
             //instances            
             InstanceOfClazz greece = new InstanceOfClazz("greece", area);
             InstanceOfClazz athens = new InstanceOfClazz("athens", subarea);
             InstanceOfClazz filadelfeia = new InstanceOfClazz("filadelfeia", subsubarea);           
-            InstanceOfClazz panagiotis = new InstanceOfClazz("panagiotis",requestor);    
+            InstanceOfClazz reqinstance = new InstanceOfClazz("reqinstance",requestor);    
+            InstanceOfClazz devinstance = new InstanceOfClazz("devinstance",developer);    
             InstanceOfClazz localhost = new InstanceOfClazz("127.0.0.1",ipaddress);    
             InstanceOfClazz iccsip = new InstanceOfClazz("147.102.23.1",ipaddress);    
             InstanceOfClazz ubiip = new InstanceOfClazz("192.168.1.1",blacklistedipaddress);    
@@ -38,8 +40,8 @@ public class DroolsTest {
             ObjectProperty requestorhasIPAddress = new ObjectProperty("hasIPAddress",requestor,ipaddress);
             
             //triples
-            KnowledgeTriple t1 = new KnowledgeTriple(panagiotis, requestorhasSubarea, athens);
-            KnowledgeTriple t2 = new KnowledgeTriple(panagiotis, requestorhasIPAddress, ubiip);
+//            KnowledgeTriple t1 = new KnowledgeTriple(panagiotis, requestorhasSubarea, athens);
+            KnowledgeTriple t2 = new KnowledgeTriple(devinstance, requestorhasIPAddress, ubiip);
             
             //add Model to Production Memory
             //classes
@@ -47,13 +49,15 @@ public class DroolsTest {
             kSession.insert(subarea);            
             kSession.insert(subsubarea);            
             kSession.insert(requestor);              
+            kSession.insert(developer);
             kSession.insert(ipaddress);      
             kSession.insert(blacklistedipaddress);      
             //instances
             kSession.insert(greece);            
             kSession.insert(athens);            
             kSession.insert(filadelfeia);            
-            kSession.insert(panagiotis);       
+            kSession.insert(reqinstance);       
+            kSession.insert(devinstance);       
             kSession.insert(localhost);       
             kSession.insert(iccsip);       
             kSession.insert(ubiip);       
@@ -61,7 +65,7 @@ public class DroolsTest {
             kSession.insert(requestorhasSubarea);
             kSession.insert(requestorhasIPAddress);
             //triples
-            kSession.insert(t1);                   
+//            kSession.insert(t1);                   
             kSession.insert(t2);                   
             
             //fire
