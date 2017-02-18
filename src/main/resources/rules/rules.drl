@@ -1,5 +1,7 @@
 package com.javacodegeeks.drools;
 
+import com.javacodegeeks.drools.Util;
+
 rule "Supertype Inheritance Inference"
 when
 
@@ -23,7 +25,7 @@ then
 end
 
 
-rule "Consistency Checking of Triples based on Domain Restrictions"
+rule "Consistency Checking of Knowledge Triples based on Domain Restrictions"
 when
     $triple: KnowledgeTriple() 
     not ( exists(  InstanceOfClazz( name == $triple.subject.name , clazz == $triple.predicate.domain ) ) )
@@ -32,7 +34,7 @@ then
     retract($triple);
 end
 
-rule "Consistency Checking of Triples based on Range Restrictions"
+rule "Consistency Checking of Knowledge Triples based on Range Restrictions"
 when
     $triple: KnowledgeTriple() 
     not ( exists(  InstanceOfClazz( name == $triple.object.name  , clazz == $triple.predicate.range  ) ) )
@@ -40,6 +42,26 @@ then
     System.out.println( "Modelling Error! Invalid Triple: " + $triple );
     retract($triple);
 end
+
+
+rule "Consistency Checking of Sub-Property Definition based on Domain Restrictions"
+when
+    $op: ObjectProperty( parent != null ) 
+    eval ( Util.isClassSubclassOfClass($op.getDomain(), $op.getParent().getDomain() ) == false )
+then
+    System.out.println( "Modelling Error! Invalid Object Sub-Property based on Domain Restrictions: " + $op );
+    retract($op);
+end
+
+rule "Consistency Checking of Sub-Property Definition based on Range Restrictions"
+when
+    $op: ObjectProperty( parent != null ) 
+    eval ( Util.isClassSubclassOfClass($op.getRange(), $op.getParent().getRange() ) == false )
+then
+    System.out.println( "Modelling Error! Invalid Object Sub-Property based on Range Restrictions: " + $op );
+    retract($op);
+end
+
 
 rule "Knowledge Expansion through Range Generalization (make use of Supertype inheritance)"
 when
