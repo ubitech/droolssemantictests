@@ -25,6 +25,12 @@ public class DroolsTest {
             Clazz city = new Clazz("City",area);
             Clazz region = new Clazz("Region",area);
             
+
+            Clazz buildingarea = new Clazz("BuildingArea",null);
+            Clazz floor = new Clazz("Floor",buildingarea);            
+            Clazz datacenter = new Clazz("Datacenter",buildingarea);
+
+            
             Clazz requestor = new Clazz("Requestor",null);            
             Clazz developer = new Clazz("Developer",requestor);            
             Clazz ipaddress = new Clazz("IP Address",null);            

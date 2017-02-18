@@ -91,6 +91,23 @@ then
 end
 
 
+rule "Knowledge Expansion through Sub-Property Generalization"
+when
+    $pred: ObjectProperty( parent != null )
+    $triple: KnowledgeTriple( predicate == $pred , $subject1: subject , $object1: object ) 
+
+    not ( 
+        exists(      
+            KnowledgeTriple( predicate == $pred.parent , subject == $triple.subject, object == $triple.object  ) 
+        ) 
+    )
+then
+    System.out.println( "Knowledge Expansion through Sub-Property Generalization --> New Triple has to be created Predicate:"+$pred.getParent().getName()+" Subject: "+$triple.getSubject().getName()+"("+$triple.getSubject().getClazz().getName()+") Object: "+$triple.getObject().getName()+"("+$triple.getObject().getClazz().getName()+")" );
+    KnowledgeTriple newtriple = new KnowledgeTriple( $triple.getSubject() , $pred.getParent() , $triple.getObject() );
+    insert(newtriple);
+end
+
+
 /*
 rule "Debug-PrintAllClasses"
 when
