@@ -24,13 +24,7 @@ public class DroolsTest {
             Clazz country = new Clazz("Country",area);
             Clazz city = new Clazz("City",area);
             Clazz region = new Clazz("Region",area);
-            
-
-            Clazz buildingarea = new Clazz("BuildingArea",null);
-            Clazz floor = new Clazz("Floor",buildingarea);            
-            Clazz datacenter = new Clazz("Datacenter",buildingarea);
-
-            
+                        
             Clazz requestor = new Clazz("Requestor",null);            
             Clazz developer = new Clazz("Developer",requestor);            
             Clazz ipaddress = new Clazz("IP Address",null);            
@@ -62,6 +56,21 @@ public class DroolsTest {
 //            KnowledgeTriple t3 = new KnowledgeTriple(greece, isLocatedAt, europe);
             KnowledgeTriple t4 = new KnowledgeTriple(filadelfeia, isLocatedAt, athens);
             KnowledgeTriple t5 = new KnowledgeTriple(athens, isLocatedAt, greece);
+
+
+            Clazz buildingarea = new Clazz("BuildingArea",null);            
+            Clazz floor = new Clazz("Floor",buildingarea);            
+            Clazz datacenter = new Clazz("Datacenter",buildingarea);            
+            Clazz employee = new Clazz("Employee",null);                       
+            InstanceOfClazz ubitechbuilding = new InstanceOfClazz("Ubitech Building",buildingarea);
+            InstanceOfClazz firstfloor = new InstanceOfClazz("Ubitech 1st Floor",floor);
+            InstanceOfClazz secondfloor = new InstanceOfClazz("Ubitech 2nd Floor",floor);            
+            InstanceOfClazz panagiotis = new InstanceOfClazz("Panagiotis",employee);
+            InstanceOfClazz giannis = new InstanceOfClazz("Giannis",employee);
+            ObjectProperty hasAccessToBuilding = new ObjectProperty("hasAccessToBuilding",employee,buildingarea);
+            ObjectProperty hasAccessToFloor = new ObjectProperty("hasAccessToFloor",employee,floor,hasAccessToBuilding);    //  Validation is required          
+            KnowledgeTriple t6 = new KnowledgeTriple(panagiotis, hasAccessToFloor, firstfloor);            
+            
             
             //add Model to Production Memory
             //classes
@@ -89,16 +98,22 @@ public class DroolsTest {
             kSession.insert(iccsip);       
             kSession.insert(ubiip);       
             //object properties
-            kSession.insert(isLocatedAt);
-//            kSession.insert(requestorhasSubarea);
-//            kSession.insert(requestorhasIPAddress);
-            
-            //triples
-//            kSession.insert(t1);                   
-//            kSession.insert(t2);                   
-//            kSession.insert(t3);                   
+            kSession.insert(isLocatedAt);                 
             kSession.insert(t4);                   
             kSession.insert(t5);                   
+            
+            kSession.insert(buildingarea);
+            kSession.insert(floor);
+            kSession.insert(datacenter);
+            kSession.insert(employee);
+            kSession.insert(ubitechbuilding);
+            kSession.insert(firstfloor);
+            kSession.insert(secondfloor);
+            kSession.insert(panagiotis);
+            kSession.insert(giannis);
+            kSession.insert(hasAccessToBuilding);
+            kSession.insert(hasAccessToFloor);
+            kSession.insert(t6);
             
             //fire
             kSession.fireAllRules();
