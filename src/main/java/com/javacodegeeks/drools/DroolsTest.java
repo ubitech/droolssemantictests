@@ -20,10 +20,11 @@ public class DroolsTest {
             KieSession kSession = kContainer.newKieSession("ksession-rules");
             //Classes
             Clazz area = new Clazz("Area",null);
-            Clazz continent = new Clazz("continent",area);
-            Clazz country = new Clazz("country",area);
-            Clazz city = new Clazz("city",area);
-            Clazz region = new Clazz("region",area);
+            Clazz continent = new Clazz("Continent",area);
+            Clazz country = new Clazz("Country",area);
+            Clazz city = new Clazz("City",area);
+            Clazz region = new Clazz("Region",area);
+            
             Clazz requestor = new Clazz("Requestor",null);            
             Clazz developer = new Clazz("Developer",requestor);            
             Clazz ipaddress = new Clazz("IP Address",null);            
@@ -45,15 +46,16 @@ public class DroolsTest {
             InstanceOfClazz ubiip = new InstanceOfClazz("192.168.1.1",blacklistedipaddress);    
 
             //object properties
-            ObjectProperty isLocatedAt = new ObjectProperty("isLocatedAt",area,area);
+            ObjectProperty isLocatedAt = new ObjectProperty("isLocatedAt",area,area,true);
 //            ObjectProperty requestorhasSubarea = new ObjectProperty("isLocatedAt",region,city);            
-            ObjectProperty requestorhasIPAddress = new ObjectProperty("hasIPAddress",requestor,ipaddress);
+//            ObjectProperty requestorhasIPAddress = new ObjectProperty("hasIPAddress",requestor,ipaddress);
             
             //triples
 //            KnowledgeTriple t1 = new KnowledgeTriple(panagiotis, requestorhasSubarea, athens);
-            KnowledgeTriple t2 = new KnowledgeTriple(devinstance, requestorhasIPAddress, ubiip);
-            KnowledgeTriple t3 = new KnowledgeTriple(greece, isLocatedAt, europe);
-            KnowledgeTriple t4 = new KnowledgeTriple(athens, isLocatedAt, greece);
+//            KnowledgeTriple t2 = new KnowledgeTriple(devinstance, requestorhasIPAddress, ubiip);
+//            KnowledgeTriple t3 = new KnowledgeTriple(greece, isLocatedAt, europe);
+            KnowledgeTriple t4 = new KnowledgeTriple(filadelfeia, isLocatedAt, athens);
+            KnowledgeTriple t5 = new KnowledgeTriple(athens, isLocatedAt, greece);
             
             //add Model to Production Memory
             //classes
@@ -83,13 +85,14 @@ public class DroolsTest {
             //object properties
             kSession.insert(isLocatedAt);
 //            kSession.insert(requestorhasSubarea);
-            kSession.insert(requestorhasIPAddress);
+//            kSession.insert(requestorhasIPAddress);
             
             //triples
 //            kSession.insert(t1);                   
-            kSession.insert(t2);                   
-            kSession.insert(t3);                   
+//            kSession.insert(t2);                   
+//            kSession.insert(t3);                   
             kSession.insert(t4);                   
+            kSession.insert(t5);                   
             
             //fire
             kSession.fireAllRules();

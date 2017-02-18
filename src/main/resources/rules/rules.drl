@@ -14,7 +14,6 @@ end
 
 rule "Class Transitiveness Inference"
 when
-
     $clazz: Clazz( parent != null , parent.parent != null  ) 
     not ( exists(  Clazz( name==$clazz.name , parent == $clazz.parent.parent ) ) )
 then
@@ -23,6 +22,24 @@ then
     insert(newclazz);
 end
 
+
+rule "Consistency Checking of Triples based on Domain Restrictions"
+when
+    $triple: KnowledgeTriple() 
+    not ( exists(  InstanceOfClazz( name == $triple.subject.name , clazz == $triple.predicate.domain ) ) )
+then
+    System.out.println( "Modelling Error! Invalid Triple: " + $triple );
+    retract($triple);
+end
+
+rule "Consistency Checking of Triples based on Range Restrictions"
+when
+    $triple: KnowledgeTriple() 
+    not ( exists(  InstanceOfClazz( name == $triple.object.name  , clazz == $triple.predicate.range  ) ) )
+then
+    System.out.println( "Modelling Error! Invalid Triple: " + $triple );
+    retract($triple);
+end
 
 rule "Knowledge Expansion through Range Generalization (make use of Supertype inheritance)"
 when
@@ -34,7 +51,7 @@ when
         ) 
     )
 then
-    System.out.println( "Knowledge Expansion through Range Generalization --> New Triple has to be created Predicate:"+$triple.getPredicate().getName()+" Subject: "+$triple.getSubject().getName() +"( "+$triple.getSubject().getClazz().getName()+" )"+" Object: "+$objectinstance.getName() + " ( "+$objectinstance.getClazz().getName()+" )" );
+    System.out.println( "Knowledge Expansion through Range Generalization  --> New Triple has to be created Predicate:"+$triple.getPredicate().getName()+" Subject: "+$triple.getSubject().getName() +"( "+$triple.getSubject().getClazz().getName()+" )"+" Object: "+$objectinstance.getName() + " ( "+$objectinstance.getClazz().getName()+" )" );
     KnowledgeTriple newtriple = new KnowledgeTriple( $triple.getSubject() , $triple.getPredicate() , $objectinstance );
     insert(newtriple);
 end
@@ -54,6 +71,25 @@ then
     KnowledgeTriple newtriple = new KnowledgeTriple( $subjectinstance , $triple.getPredicate() , $triple.getObject() );
     insert(newtriple);
 end
+
+
+rule "Knowledge Expansion through Transitive Property Interpretation"
+when
+    $pred: ObjectProperty(transitive == true )
+    $triple1: KnowledgeTriple( predicate == $pred , $subject1: subject , $object1: object ) 
+    $triple2: KnowledgeTriple( predicate == $pred , subject == $object1) 
+
+    not ( 
+        exists(      
+            KnowledgeTriple( predicate == $pred , subject == $triple1.subject, object == $triple2.object  ) 
+        ) 
+    )
+then
+    System.out.println( "Knowledge Expansion through Transitive Property   --> New Triple has to be created Predicate:"+$pred.getName()+" Subject: "+$triple1.getSubject().getName()+"("+$triple1.getSubject().getClazz().getName()+") Object: "+$triple2.getObject().getName()+"("+$triple2.getObject().getClazz().getName()+")" );
+    KnowledgeTriple newtriple = new KnowledgeTriple( $triple1.getSubject() , $pred , $triple2.getObject() );
+    insert(newtriple);
+end
+
 
 /*
 rule "Debug-PrintAllClasses"
