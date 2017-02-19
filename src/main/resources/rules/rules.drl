@@ -2,6 +2,16 @@ package com.javacodegeeks.drools;
 
 import com.javacodegeeks.drools.Util;
 
+rule "Class Transitiveness Inference"
+when
+    $clazz: Clazz( parent != null , parent.parent != null  ) 
+    not ( exists(  Clazz( name==$clazz.name , parent == $clazz.parent.parent ) ) )
+then
+    System.out.println( "Class Transitiveness --> New Class has to be created with name: "+ $clazz.getName() +" and parent: "+$clazz.getParent().getParent().getName() );
+    Clazz newclazz = new Clazz($clazz.getName(),$clazz.getParent().getParent());
+    insert(newclazz);
+end
+
 rule "Supertype Inheritance Inference"
 when
 
@@ -13,16 +23,6 @@ then
     insert(newinstanceofclazz);
 end
 
-
-rule "Class Transitiveness Inference"
-when
-    $clazz: Clazz( parent != null , parent.parent != null  ) 
-    not ( exists(  Clazz( name==$clazz.name , parent == $clazz.parent.parent ) ) )
-then
-    System.out.println( "Class Transitiveness --> New Class has to be created with name: "+ $clazz.getName() +" and parent: "+$clazz.getParent().getParent().getName() );
-    Clazz newclazz = new Clazz($clazz.getName(),$clazz.getParent().getParent());
-    insert(newclazz);
-end
 
 
 rule "Consistency Checking of Knowledge Triples based on Domain Restrictions"
@@ -128,6 +128,35 @@ then
     KnowledgeTriple newtriple = new KnowledgeTriple( $triple.getSubject() , $pred.getParent() , $triple.getObject() );
     insert(newtriple);
 end
+
+//////////////  PaaSword Rules   /////////////////////////
+rule "PaaSword Rule 1"
+// if timestamp > 5 &&
+// if request.employee == Panagiotis Gouvas
+
+when    
+    //fetch phase
+    $req: InstanceOfClazz( name == 'request1')
+    $pred1: ObjectProperty( name == 'Request_hasTimestamp_Timestamp' )
+    $tr1: KnowledgeTriple( subject == $req , predicate == $pred1 , $object1: object)   //Instance of Timestamp
+    $pred2: ObjectProperty( name == 'Request_comesFrom_Employee' )
+    $tr2: KnowledgeTriple( subject == $req , predicate == $pred2 , $object2: object)   //Instance of Employee
+    $pred3: ObjectProperty( name == 'Request_hasIP_IPAddress' )
+    $tr3: KnowledgeTriple( subject == $req , predicate == $pred3 , $object3: object)   //Instance of IP 
+    $pred4: ObjectProperty( name == 'IPAddress_hasStatus_Classificationstatus' )
+    $tr4: KnowledgeTriple( subject == $object3 , predicate == $pred4 , $object4: object)   //Instance of IPClassification Status  (instead of req - $object3 is used)
+
+    //evaluation phase
+    eval (new Integer($object1.getName()) > 5) and
+    eval ($object2.getName() == 'Panagiotis Gouvas') and
+    eval ($object3.getName() == '213.249.38.66') and
+    eval ($object4.getName() == 'Whitelisted') 
+
+then
+    System.out.println( "Rule: " + $object1.getName() +" "+$object2.getName()+" "+$object3.getName()+" "+$object4.getName() );
+end
+
+
 
 
 /*
