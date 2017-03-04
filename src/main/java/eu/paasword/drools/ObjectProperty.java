@@ -1,4 +1,4 @@
-package com.javacodegeeks.drools;
+package eu.paasword.drools;
 
 /**
  *

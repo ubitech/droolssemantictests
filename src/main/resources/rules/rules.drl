@@ -1,6 +1,6 @@
-package com.javacodegeeks.drools;
+package eu.paasword.drools;
 
-import com.javacodegeeks.drools.Util;
+import eu.paasword.drools.Util;
 
 rule "Class Transitiveness Inference"
 when
@@ -12,6 +12,7 @@ then
     insert(newclazz);
 end
 
+
 rule "Supertype Inheritance Inference"
 when
 
@@ -22,7 +23,6 @@ then
     InstanceOfClazz newinstanceofclazz = new InstanceOfClazz($instance.getName(),$instance.getClazz().getParent());
     insert(newinstanceofclazz);
 end
-
 
 
 rule "Consistency Checking of Knowledge Triples based on Domain Restrictions"
@@ -130,9 +130,11 @@ then
 end
 
 //////////////  PaaSword Rules   /////////////////////////
-rule "PaaSword Rule 1"
-// if timestamp > 5 &&
-// if request.employee == Panagiotis Gouvas
+rule "rule-1001 PaaSword Rule"
+// if request.timestamp > 5                     &&
+// if request.employee == Panagiotis Gouvas     &&
+// if request.ipaddress == 213.249.38.66        &&
+// if request.ipaddress.status == whitelisted
 
 when    
     //fetch phase
