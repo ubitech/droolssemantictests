@@ -1,0 +1,45 @@
+#Type,Label,Arg1,Arg2
+#Acceptable Types: Class (C), InstanceOfClass (IOC), ObjectProperty(OP), KnowledgeTriple (KT)
+#
+# examples:
+#
+# C,Area,null        denotes a Class with label Area and no superclass
+# C,Continent,Area   denotes a Class with label Continent that has Area as superclass 
+# 
+# IoC,Europe,Continent      denotes an Instance of class continent with the label Europe
+#
+# OP,areaContainsArea, Area, Area,false,null    denotes an Object Property that has label: areaContainsArea, Domain: Area, Range: Area , it is Not transitive (false) and has no parental Object Property (null)
+#
+
+#Classes 
+C,Area, null
+C,Continent,Area
+C,Country, Area
+C,City, Area
+C,Region, Area
+C,IPAddress,null
+C,PrivateIPAddress,IPAddress
+C,PublicIPAddress,PrivateIPAddress
+C,IPClassificationStatus,null
+
+C,Building, null
+C,PartOfBuilding, null
+C,Floor, PartOfBuilding
+C,Datacenter, PartOfBuilding
+
+C,Employee, null
+C,Secretery, Employee
+C,Developer, Employee
+
+C,Request, null
+C,Timestamp, null
+
+#Instances
+IoC,Europe,Continent
+IoC,Greece,Country
+
+#Object Properties
+
+OP,areaContainsArea, Area, Area,true,null
+OP,EmployeehasAccessToBuilding, Employee, Building , false , null
+OP,DeveloperhasAccessToBuilding, Developer, Building , false , EmployeehasAccessToBuilding

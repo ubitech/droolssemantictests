@@ -82,10 +82,10 @@ public class ObjectProperty {
     public void setTransitive(boolean transitive) {
         this.transitive = transitive;
     }    
-    
+
     @Override
     public String toString() {
-        return "ObjectProperty{" + "name=" + name + ", domain=" + domain + ", range=" + range + ", parent=" + parent + '}';
-    }
+        return "ObjectProperty{" + "name=" + name + ", domain=" + domain + ", range=" + range + ", transitive=" + transitive + ", parent=" + parent + '}';
+    }   
     
 }

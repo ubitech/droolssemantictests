@@ -3,7 +3,6 @@ package eu.paasword.drools.config;
 import eu.paasword.drools.service.RulesEngineService;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.logging.Logger;
 import org.apache.tomcat.util.http.fileupload.FileUtils;
 import org.kie.api.KieServices;
@@ -12,9 +11,7 @@ import org.kie.api.builder.KieFileSystem;
 import org.kie.api.builder.ReleaseId;
 import org.kie.api.builder.model.KieBaseModel;
 import org.kie.api.builder.model.KieModuleModel;
-import org.kie.api.conf.EventProcessingOption;
 import org.kie.api.runtime.KieContainer;
-import org.kie.api.runtime.conf.ClockTypeOption;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -76,10 +73,22 @@ public class Initializer {
         }
         //create knowledge base
         rulesEngineService.createKnowledgebase();
-
         logger.info("Ready to launch KIE Container");
         return rulesEngineService.launchKieContainer();
-
     }//EoM    
 
+    /**
+     * Load the production memory.
+     *
+     * @param rulesEngineService
+     * @return
+     */
+    @Order(3)
+    @Bean
+    public String loadOntology(RulesEngineService rulesEngineService) {
+        logger.info("loadOntology");
+        rulesEngineService.loadOntology();        
+        return "ok";
+    }//EoM       
+    
 }//EoC

@@ -2,22 +2,24 @@ package eu.paasword.drools.service;
 
 import eu.paasword.drools.Clazz;
 import eu.paasword.drools.InstanceOfClazz;
-import static eu.paasword.drools.config.Initializer.FACT_KNOWLEDGEBASE_BASE_PREFIX;
-import static eu.paasword.drools.config.Initializer.FACT_SESSION_PREFIX;
 import static eu.paasword.drools.config.Initializer.KIE_BASE_MODEL_PREFIX;
 import static eu.paasword.drools.config.Initializer.KNOWLEDGEBASE_PREFIX;
 import static eu.paasword.drools.config.Initializer.PACKAGE_NAME;
 import static eu.paasword.drools.config.Initializer.RULESPACKAGE;
 import static eu.paasword.drools.config.Initializer.SESSION_PREFIX;
-import eu.paasword.drools.util.KieUtil;
+import eu.paasword.drools.util.ReflectionUtil;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.kie.api.KieServices;
 import org.kie.api.builder.KieBuilder;
 import org.kie.api.builder.KieFileSystem;
@@ -29,11 +31,9 @@ import org.kie.api.builder.model.KieSessionModel;
 import org.kie.api.conf.EventProcessingOption;
 import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.KieSession;
-import org.kie.api.runtime.conf.BeliefSystemTypeOption;
-import org.kie.api.runtime.conf.ClockTypeOption;
-import org.kie.api.runtime.rule.FactHandle;
 import org.kie.internal.io.ResourceFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
@@ -50,11 +50,13 @@ public class RulesEngineService {
     private final KieFileSystem kieFileSystem;
     private final KieModuleModel kieModuleModel;
     private KieSession ksession;
+    private KieContainer kieContainer;
 
-    KieContainer kieContainer;
+    @Value("${ontology.path}")
+    private String ontologypath;
 
     @Autowired
-    public RulesEngineService(KieUtil kieUtil) {
+    public RulesEngineService() {
         logger.info("Rule Engine initializing...");
         this.kieServices = KieServices.Factory.get();
         this.kieFileSystem = kieServices.newKieFileSystem();
@@ -70,17 +72,17 @@ public class RulesEngineService {
         String factSessionName = SESSION_PREFIX + knowledgebasename;
         KieSessionModel ksessionmodel = kbase.newKieSessionModel(factSessionName);                                                                       //.setClockType(ClockTypeOption.get("realtime"));
         ksessionmodel.setDefault(true)
-        .setType(KieSessionModel.KieSessionType.STATEFUL);
+                .setType(KieSessionModel.KieSessionType.STATEFUL);
         //.setFileLogger("drools.log", 10, true)
 //        .setConsoleLogger("logger");
-        
+
     }//EoM    
 
     public KieContainer launchKieContainer() {
         Double newversion = Double.parseDouble(releaseId.getVersion()) + 0.1;
         ReleaseId newReleaseId = kieServices.newReleaseId(PACKAGE_NAME, "expert-system", newversion.toString());
         KieBuilder kieBuilder = kieServices.newKieBuilder(kieFileSystem);
-        
+
         kieFileSystem.generateAndWritePomXML(newReleaseId);
         kieFileSystem.writeKModuleXML(kieModuleModel.toXML());
         logger.log(java.util.logging.Level.INFO, "kieModuleModel--ToXML\n{0}", kieModuleModel.toXML());
@@ -103,10 +105,104 @@ public class RulesEngineService {
         return kieContainer;
     }//ΕοΜ    
 
-    public void loadOntology(){
-        
-    }
-    
+    public void loadOntology() {
+
+        Map<String, Object> intiorphanclassobjectmap = new HashMap<>();
+        Map<String, Object> intermediateclassobjectmap = new HashMap<>();
+        Map<String, Object> finalclassobjectmap = new HashMap<>();
+        Map<String, Object> finalinstanceobjectmap = new HashMap<>();
+        Map<String, Object> initopobjectmap = new HashMap<>();
+        Map<String, Object> intermediateopobjectmap = new HashMap<>();
+        Map<String, Object> finalopobjectmap = new HashMap<>();
+
+        try {
+            /*
+            *   LOAD CLASSES
+            */
+            //Fetch all Classes that are orphan
+            Stream<String> stream = Files.lines(Paths.get(ontologypath));
+            intiorphanclassobjectmap = stream
+                    .filter(line -> !line.startsWith("#") && !line.trim().equalsIgnoreCase("") && ((line.split(",")[0]).trim().equalsIgnoreCase("C") || (line.split(",")[0]).trim().equalsIgnoreCase("Class"))) //&& (line.split(",")[2]).trim().equalsIgnoreCase("null")
+                    .map(line -> ReflectionUtil.createOrphanClazz(ReflectionUtil.getClassLabelFromLine(line)))
+                    .collect(Collectors.toMap(o -> ReflectionUtil.getNameOfObject(o), o -> o));
+            final Map<String, Object> temp1 = intiorphanclassobjectmap;
+//            logger.info("1st Pass of Classes: ");
+//            intiorphanclassobjectmap.values().forEach(System.out::println);
+
+            //Handle Non Orphan
+            Stream<String> stream2 = Files.lines(Paths.get(ontologypath));
+            intermediateclassobjectmap = stream2
+                    .filter(line -> !line.startsWith("#") && !line.trim().equalsIgnoreCase("") && ((line.split(",")[0]).trim().equalsIgnoreCase("C") || (line.split(",")[0]).trim().equalsIgnoreCase("Class")) && !(line.split(",")[2]).trim().equalsIgnoreCase("null"))
+                    .map(line -> ReflectionUtil.setParentToClazzObject(temp1.get(ReflectionUtil.getClassLabelFromLine(line)), temp1.get(ReflectionUtil.getParentalClassLabelFromLine(line))))
+                    .collect(Collectors.toMap(o -> ReflectionUtil.getNameOfObject(o), o -> o));
+
+            final Map<String, Object> temp2 = intermediateclassobjectmap;
+//            logger.info("Intermediate Pass of Classes: ");
+//            intermediateclassobjectmap.values().forEach(System.out::println);
+
+            //Create Final list
+            finalclassobjectmap = temp1.values().stream()
+                    .filter(clazz -> !temp2.containsKey(ReflectionUtil.getNameOfObject(clazz)))
+                    .collect(Collectors.toMap(o -> ReflectionUtil.getNameOfObject(o), o -> o));
+            //append non orphan
+            for (Object object : intermediateclassobjectmap.values()) {
+                finalclassobjectmap.put(ReflectionUtil.getNameOfObject(object), object);
+            }
+            final Map<String, Object> temp3 = finalclassobjectmap;
+            logger.info("Classes: ");
+            finalclassobjectmap.values().forEach(System.out::println);
+
+            /*
+            *   LOAD CLASS INSTANCES
+            */
+            Stream<String> stream3 = Files.lines(Paths.get(ontologypath));
+            finalinstanceobjectmap = stream3
+                    .filter(line -> !line.startsWith("#") && !line.trim().equalsIgnoreCase("") && ((line.split(",")[0]).trim().equalsIgnoreCase("IoC") || (line.split(",")[0]).trim().equalsIgnoreCase("InstanceOfClass"))) //&& (line.split(",")[2]).trim().equalsIgnoreCase("null")
+                    .map(line -> ReflectionUtil.createInstanceOfClazz(ReflectionUtil.getInstanceLabelFromLine(line) , temp3.get(ReflectionUtil.getInstanceClassLabelFromLine(line)) )  )
+                    .collect(Collectors.toMap(o -> ReflectionUtil.getNameOfObject(o), o -> o));            
+            
+            logger.info("Instances Of Classes: ");
+            finalinstanceobjectmap.values().forEach(System.out::println);            
+            
+            /*
+            *   LOAD OBJECT PROPERTIES
+            */            
+            Stream<String> stream4 = Files.lines(Paths.get(ontologypath));
+            initopobjectmap = stream4
+                    .filter(line -> !line.startsWith("#") && !line.trim().equalsIgnoreCase("") && ((line.split(",")[0]).trim().equalsIgnoreCase("OP") || (line.split(",")[0]).trim().equalsIgnoreCase("ObjectProperty"))) //&& (line.split(",")[2]).trim().equalsIgnoreCase("null")
+                    .map(line -> ReflectionUtil.createOrphanObjectProperty(ReflectionUtil.getOPLabelFromLine(line) , temp3.get(ReflectionUtil.getDomainOPLabelFromLine(line)) , temp3.get(ReflectionUtil.getRangeOPLabelFromLine(line)) , new Boolean(ReflectionUtil.getTransitiveFromLine(line)) )  )
+                    .collect(Collectors.toMap(o -> ReflectionUtil.getNameOfObject(o), o -> o));            
+            final Map<String, Object> temp11 =  initopobjectmap;           
+//            logger.info("Init Pass Of Object Properties: ");
+//            initopobjectmap.values().forEach(System.out::println);                        
+            
+            Stream<String> stream5 = Files.lines(Paths.get(ontologypath));
+            intermediateopobjectmap = stream5
+                    .filter(line -> !line.startsWith("#") && !line.trim().equalsIgnoreCase("") && ((line.split(",")[0]).trim().equalsIgnoreCase("OP") || (line.split(",")[0]).trim().equalsIgnoreCase("ObjectProperty")) && !(line.split(",")[5]).trim().equalsIgnoreCase("null") ) 
+                    .map(line -> ReflectionUtil.setParentToObjectPropertyObject( temp11.get(ReflectionUtil.getOPLabelFromLine(line)), temp11.get(ReflectionUtil.getParentalOPLabelFromLine(line)) )  )
+                    .collect(Collectors.toMap(o -> ReflectionUtil.getNameOfObject(o), o -> o));            
+            final Map<String, Object> temp12 =  intermediateopobjectmap;           
+//            logger.info("Intermediate Object Properties: ");
+//            intermediateopobjectmap.values().forEach(System.out::println);                
+            
+            //Create Final list
+            finalopobjectmap = temp11.values().stream()
+                    .filter(clazz -> !temp12.containsKey(ReflectionUtil.getNameOfObject(clazz)))
+                    .collect(Collectors.toMap(o -> ReflectionUtil.getNameOfObject(o), o -> o));
+            //append non orphan
+            for (Object object : intermediateopobjectmap.values()) {
+                finalopobjectmap.put(ReflectionUtil.getNameOfObject(object), object);
+            }
+            final Map<String, Object> temp13 = finalclassobjectmap;
+            logger.info("Object Properties: ");
+            finalopobjectmap.values().forEach(System.out::println);            
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }//EoM
+
     private synchronized void setSession(KieSession session) {
         this.ksession = session;
     }
@@ -167,8 +263,8 @@ public class RulesEngineService {
         Clazz area = new Clazz("Area", null);
         Clazz continent = new Clazz("Continent", area);     //sub-classing will trigger "Class Transitiveness Inference"
         Clazz country = new Clazz("Country", area);
-        InstanceOfClazz africa = new InstanceOfClazz("Africa", continent);        
-        
+        InstanceOfClazz africa = new InstanceOfClazz("Africa", continent);
+
         kieSession.insert(area);
         kieSession.insert(continent);
         kieSession.insert(country);
