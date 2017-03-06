@@ -132,33 +132,95 @@ then
 end
 
 //////////////  PaaSword Rules   /////////////////////////
-rule "rule-1001 PaaSword Rule"
+//rule "rule-1001 PaaSword Rule"
 // if request.timestamp > 5                     &&
 // if request.employee == Panagiotis Gouvas     &&
 // if request.ipaddress == 213.249.38.66        &&
 // if request.ipaddress.status == whitelisted
 
-when    
-    //fetch phase
-    $req: InstanceOfClazz( name == 'request1')
-    $pred1: ObjectProperty( name == 'Request_hasTimestamp_Timestamp' )
-    $tr1: KnowledgeTriple( subject == $req , predicate == $pred1 , $object1: object)   //Instance of Timestamp
-    $pred2: ObjectProperty( name == 'Request_comesFrom_Employee' )
-    $tr2: KnowledgeTriple( subject == $req , predicate == $pred2 , $object2: object)   //Instance of Employee
-    $pred3: ObjectProperty( name == 'Request_hasIP_IPAddress' )
-    $tr3: KnowledgeTriple( subject == $req , predicate == $pred3 , $object3: object)   //Instance of IP 
-    $pred4: ObjectProperty( name == 'IPAddress_hasStatus_Classificationstatus' )
-    $tr4: KnowledgeTriple( subject == $object3 , predicate == $pred4 , $object4: object)   //Instance of IPClassification Status  (instead of req - $object3 is used)
+//when    
+//    //fetch phase
+//    $req: InstanceOfClazz( name == 'request1')
+//    $pred1: ObjectProperty( name == 'Request_hasTimestamp_Timestamp' )
+//    $tr1: KnowledgeTriple( subject == $req , predicate == $pred1 , $object1: object)   //Instance of Timestamp
+//    $pred2: ObjectProperty( name == 'Request_comesFrom_Employee' )
+//    $tr2: KnowledgeTriple( subject == $req , predicate == $pred2 , $object2: object)   //Instance of Employee
+//    $pred3: ObjectProperty( name == 'Request_hasIP_IPAddress' )
+//    $tr3: KnowledgeTriple( subject == $req , predicate == $pred3 , $object3: object)   //Instance of IP 
+//    $pred4: ObjectProperty( name == 'IPAddress_hasStatus_Classificationstatus' )
+//    $tr4: KnowledgeTriple( subject == $object3 , predicate == $pred4 , $object4: object)   //Instance of IPClassification Status  (instead of req - $object3 is used)
 
     //evaluation phase
-    eval (new Integer($object1.getName()) > 5) and
-    eval ($object2.getName() == 'Panagiotis Gouvas') and
-    eval ($object3.getName() == '213.249.38.66') and
-    eval ($object4.getName() == 'Whitelisted') 
+//    eval (new Integer($object1.getName()) > 5) and
+//    eval ($object2.getName() == 'Panagiotis Gouvas') and
+//    eval ($object3.getName() == '213.249.38.66') and
+//    eval ($object4.getName() == 'Whitelisted') 
 
+//then
+//    System.out.println( "Rule: " + $object1.getName() +" "+$object2.getName()+" "+$object3.getName()+" "+$object4.getName() );
+//end
+
+rule "rule-14 Rule"
+
+when    
+    
+    $req: InstanceOfClazz( clazz.name =='Request')    
+    
+    $pred1: ObjectProperty( name == 'requestHasSubject' )
+    $pred2: ObjectProperty( name == 'requestHasObject' )
+    $pred3: ObjectProperty( name == 'requestHasAction' )   
+    $pred4: ObjectProperty( name == 'requestHasIPAddress' )   
+    
+    $tr1: KnowledgeTriple( subject == $req , predicate == $pred1 , $object1: object)      
+    $tr2: KnowledgeTriple( subject == $req , predicate == $pred2 , $object2: object)          
+    $tr3: KnowledgeTriple( subject == $req , predicate == $pred3 , $object3: object)          
+    $tr4: KnowledgeTriple( subject == $req , predicate == $pred4 , $object4: object)          
+    
+    
+    eval ($object1.getName() == 'Spyros')        and
+    eval ($object2.getName() == 'webservice1')   and
+    eval ($object3.getName() == 'GET')   and (
+        //expression
+        eval ($object4.getName() == '192.168.1.1')
+    )
+    
 then
-    System.out.println( "Rule: " + $object1.getName() +" "+$object2.getName()+" "+$object3.getName()+" "+$object4.getName() );
-end
+    Advice advice = new Advice('positive', $req.getName() );
+    insert(advice);
+    System.out.println( "Rule-14 Positive Advice for request: "+$req.getName());
+end    
+    
+
+rule "rule-14 Negation"
+
+when    
+    
+    $req: InstanceOfClazz( clazz.name =='Request')    
+    
+    $pred1: ObjectProperty( name == 'requestHasSubject' )
+    $pred2: ObjectProperty( name == 'requestHasObject' )
+    $pred3: ObjectProperty( name == 'requestHasAction' )   
+    $pred4: ObjectProperty( name == 'requestHasIPAddress' )   
+    
+    $tr1: KnowledgeTriple( subject == $req , predicate == $pred1 , $object1: object)      
+    $tr2: KnowledgeTriple( subject == $req , predicate == $pred2 , $object2: object)          
+    $tr3: KnowledgeTriple( subject == $req , predicate == $pred3 , $object3: object)          
+    $tr4: KnowledgeTriple( subject == $req , predicate == $pred4 , $object4: object)          
+    
+    not (
+        eval ($object1.getName() == 'Spyros')        and
+        eval ($object2.getName() == 'webservice1')   and
+        eval ($object3.getName() == 'GET')   and (
+            //expression
+            eval ($object4.getName() == '192.168.1.1')
+        )
+    )
+then
+    Advice advice = new Advice('negative', $req.getName() );
+    insert(advice);
+    System.out.println( "Rule-14 Negative Advice for request: "+$req.getName());
+end    
+
 
 
 

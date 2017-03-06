@@ -195,10 +195,148 @@ public class DroolsTest {
 //            for (FactHandle facthandle : kSession.getFactHandles()) {
 //                logger.info(facthandle.toString());
 //            }//for
-
         } catch (Exception e) {
             e.printStackTrace();
         }
     }//EoM
+
+    public static final void main(String[] args) {
+        try {
+            // load up the knowledge base
+            KieServices ks = KieServices.Factory.get();
+            KieContainer kContainer = ks.getKieClasspathContainer();
+            KieSession kSession = kContainer.newKieSession("ksession-rules");
+            //Classes
+            Clazz request = new Clazz("Request", null);
+            Clazz subject = new Clazz("Subject", null);
+            Clazz object = new Clazz("Object", null);
+            Clazz action = new Clazz("Action", null);
+
+            InstanceOfClazz get = new InstanceOfClazz("GET", action);
+            InstanceOfClazz post = new InstanceOfClazz("POST", action);
+            InstanceOfClazz delete = new InstanceOfClazz("DELETE", action);
+            InstanceOfClazz put = new InstanceOfClazz("PUT", action);
+
+            ObjectProperty op1 = new ObjectProperty("requestHasSubject", request, subject, false, null);
+            ObjectProperty op2 = new ObjectProperty("requestHasObject", request, object, false, null);
+            ObjectProperty op3 = new ObjectProperty("requestHasAction", request, action, false, null);
+
+            Clazz area = new Clazz("Area", null);
+            Clazz continent = new Clazz("Continent", area);     //sub-classing will trigger "Class Transitiveness Inference"
+            Clazz country = new Clazz("Country", area);
+            Clazz city = new Clazz("City", area);
+            Clazz region = new Clazz("Region", area);
+            Clazz ipaddress = new Clazz("IP Address", null);
+            Clazz privateipaddress = new Clazz("Private IP Address", ipaddress);
+            Clazz publicipaddress = new Clazz("Public IP Address", ipaddress);
+            Clazz ipclassificationstatus = new Clazz("IP Classification Status", null);
+            Clazz building = new Clazz("Building", null);
+            Clazz partofbuilding = new Clazz("Part Of Building", null);
+            Clazz floor = new Clazz("Floor", partofbuilding);
+            Clazz datacenter = new Clazz("Datacenter", partofbuilding);
+            Clazz employee = new Clazz("Employee", null);
+            Clazz secretery = new Clazz("Secretery", employee);
+            Clazz developer = new Clazz("Developer", employee);
+
+            InstanceOfClazz i1 = new InstanceOfClazz("Europe", continent);
+            InstanceOfClazz i2 = new InstanceOfClazz("Greece", country);
+
+            ObjectProperty op4 = new ObjectProperty("subjectHasLocation", subject, city, false, null);
+            ObjectProperty op5 = new ObjectProperty("requestHasIPAddress", request, ipaddress, false, null);
+
+            //add Model to Production Memory
+            //classes            
+            kSession.insert(request);
+            kSession.insert(subject);
+            kSession.insert(object);
+            kSession.insert(action);
+            kSession.insert(get);
+            kSession.insert(post);
+            kSession.insert(delete);
+            kSession.insert(put);
+            kSession.insert(op1);
+            kSession.insert(op2);
+            kSession.insert(op3);
+            kSession.insert(op3);
+            kSession.insert(area);
+            kSession.insert(continent);
+            kSession.insert(country);
+            kSession.insert(city);
+            kSession.insert(region);
+
+            kSession.insert(ipaddress);
+            kSession.insert(privateipaddress);
+            kSession.insert(publicipaddress);
+            kSession.insert(ipclassificationstatus);
+
+            kSession.insert(building);
+            kSession.insert(partofbuilding);
+            kSession.insert(floor);
+            kSession.insert(datacenter);
+
+            kSession.insert(employee);
+            kSession.insert(secretery);
+            kSession.insert(developer);
+            kSession.insert(i1);
+            kSession.insert(i2);
+            kSession.insert(op4);
+            kSession.insert(op5);
+
+            //Handlers
+            //create request
+            InstanceOfClazz req1 = new InstanceOfClazz("123456", request);
+            InstanceOfClazz sub1 = new InstanceOfClazz("Spyros", subject);
+            InstanceOfClazz obj1 = new InstanceOfClazz("webservice1", object);
+            InstanceOfClazz ac1 = new InstanceOfClazz("GET", action);
+            InstanceOfClazz ip1 = new InstanceOfClazz("192.168.1.1", ipaddress);
+            KnowledgeTriple t1 = new KnowledgeTriple(req1, op1, sub1);
+            KnowledgeTriple t2 = new KnowledgeTriple(req1, op2, obj1);
+            KnowledgeTriple t3 = new KnowledgeTriple(req1, op3, ac1);
+            KnowledgeTriple t4 = new KnowledgeTriple(req1, op5, ip1);
+
+            InstanceOfClazz req2 = new InstanceOfClazz("6456", request);
+            InstanceOfClazz sub2 = new InstanceOfClazz("Spyros1", subject);
+            InstanceOfClazz obj2 = new InstanceOfClazz("webservice2", object);
+            InstanceOfClazz ac2 = new InstanceOfClazz("POST", action);
+            InstanceOfClazz ip2 = new InstanceOfClazz("127.0.0.1", ipaddress);
+            KnowledgeTriple t5 = new KnowledgeTriple(req2, op1, sub2);
+            KnowledgeTriple t6 = new KnowledgeTriple(req2, op2, obj2);
+            KnowledgeTriple t7 = new KnowledgeTriple(req2, op3, ac2);
+            KnowledgeTriple t8 = new KnowledgeTriple(req2, op5, ip2);            
+            
+            kSession.insert(req1);            
+            kSession.insert(sub1);            
+            kSession.insert(obj1);            
+            kSession.insert(ac1);            
+            kSession.insert(ip1);            
+            kSession.insert(t1);            
+            kSession.insert(t2);            
+            kSession.insert(t3);            
+            kSession.insert(t4);            
+            
+            kSession.insert(req2);            
+            kSession.insert(sub2);            
+            kSession.insert(obj2);            
+            kSession.insert(ac2);            
+            kSession.insert(ip2);            
+            kSession.insert(t5);            
+            kSession.insert(t6);            
+            kSession.insert(t7);            
+            kSession.insert(t8);              
+            
+            
+            //fire Rules
+            kSession.fireAllRules();
+            logger.info("---> I will fire again!");
+            
+            InstanceOfClazz req3 = new InstanceOfClazz("1234sda56", request);
+            kSession.insert(req3); 
+                                                   
+            kSession.fireAllRules();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }//EoM    
 
 }//EoC

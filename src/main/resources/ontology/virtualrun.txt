@@ -1,0 +1,135 @@
+
+--------------------------During loading at bootstrapping----------------------------------------------------
+
+
+rule-14
+advice:positive
+subject:Spyros
+object:webservice1
+action:GET
+expression(
+    Spyros subjectHasLocation Germany &&
+    AnyRequest requestHasIPAddress 192.168.1.1
+)
+
+--------------------------Lifecycle of Drools Rules Creation  ----------------------------
+
+
+rule "rule-14 Rule"
+
+when    
+    
+    $req: InstanceOfClazz( clazz.name =='Request')    
+    
+    $pred1: ObjectProperty( name == 'requestHasSubject' )
+    $pred2: ObjectProperty( name == 'requestHasObject' )
+    $pred3: ObjectProperty( name == 'requestHasAction' )   
+    $pred4: ObjectProperty( name == 'requestHasIPAddress' )   
+    
+    $tr1: KnowledgeTriple( subject == $req , predicate == $pred1 , $object1: object)      
+    $tr2: KnowledgeTriple( subject == $req , predicate == $pred2 , $object2: object)          
+    $tr3: KnowledgeTriple( subject == $req , predicate == $pred3 , $object3: object)          
+    $tr4: KnowledgeTriple( subject == $req , predicate == $pred4 , $object4: object)          
+    
+    
+    eval ($object1.getName() == 'Spyros')        and
+    eval ($object2.getName() == 'webservice1')   and
+    eval ($object3.getName() == 'GET')   and (
+        //expression
+        eval ($object4.getName() == '192.168.1.1')
+    )
+    
+then
+    Advice advice = new Advice('positive', $req.getName() );
+    insert(advice);
+    System.out.println( "Rule-14 Positive Advice for request: "+$req.getName());
+end    
+    
+
+rule "rule-14 Negation"
+
+when    
+    
+    $req: InstanceOfClazz( clazz.name =='Request')    
+    
+    $pred1: ObjectProperty( name == 'requestHasSubject' )
+    $pred2: ObjectProperty( name == 'requestHasObject' )
+    $pred3: ObjectProperty( name == 'requestHasAction' )   
+    $pred4: ObjectProperty( name == 'requestHasIPAddress' )   
+    
+    $tr1: KnowledgeTriple( subject == $req , predicate == $pred1 , $object1: object)      
+    $tr2: KnowledgeTriple( subject == $req , predicate == $pred2 , $object2: object)          
+    $tr3: KnowledgeTriple( subject == $req , predicate == $pred3 , $object3: object)          
+    $tr4: KnowledgeTriple( subject == $req , predicate == $pred4 , $object4: object)          
+    
+    not (
+        eval ($object1.getName() == 'Spyros')        and
+        eval ($object2.getName() == 'webservice1')   and
+        eval ($object3.getName() == 'GET')   and (
+            //expression
+            eval ($object4.getName() == '192.168.1.1')
+        )
+    )
+then
+    Advice advice = new Advice('negative', $req.getName() );
+    insert(advice);
+    System.out.println( "Rule-14 Negative Advice for request: "+$req.getName());
+end         
+
+
+    
+--------------------------Lifecycle of Authorization Request (through Rest) ----------------------------
+
+
+AuthorizationRequest(
+requestid: 123456
+subjectinstance:Panagiotis
+objectinstance:webservice2
+actioninstance:POST
+rule:  rule-14
+
+requestorip: 127.0.0.1
+
+)
+
+--------------------------
+
+Step 1 - Enrich Working Memory with AuthorizationRequest object details
+    
+    //create request
+    InstanceOfClazz req123456 = new InstanceOfClazz("123456", Request);    .insert() 
+    
+    InstanceOfClazz subxx = getFromWorkingMemory(Subject.class,"Panagiotis");   .insert() 
+    
+    InstanceOfClazz objectxx = getFromWorkingMemory(Object.class,"webservice2");    .insert() 
+    
+    InstanceOfClazz actionxx = getFromWorkingMemory(Action.class,"POST");     .insert() 
+    
+    InstanceOfClazz ipaddrxx = getFromWorkingMemory(IPAddress.class,"127.0.0.1");   .insert() 
+    
+    new KnowledgeTriple(req123456, requestHasSubject, subxx); .insert()
+    
+    new KnowledgeTriple(req123456, requestHasObject, objectxx); .insert()    
+    
+    new KnowledgeTriple(req123456, requestHasAction, actionxx);  .insert()   
+    
+    new KnowledgeTriple(req123456, requestHasIPAddress, ipaddrxx);  .insert()
+    
+    
+Step 2 - Check authorization policy (wether policyset, policy or rule) and infer the handlers that are associated with the nested expression
+
+   Rest1- subjectHasLocation(Spyros)  = Italy
+   
+   new KnowledgeTriple(Panagiotis, subjectHasLocation, Italy); .insert() 
+
+   Rest2 - Any ??
+   
+   
+Step 3 - Fire Rules with Filter
+
+    session.fireAll(  Filter(inference*, rule-14) )
+
+Step 4- Get RequestAdvice(s)    
+        RequestAdvice ( 123456, positive )
+
+Step 5 - AuthorizationResponse (through REST)        

@@ -240,6 +240,11 @@ public class RulesEngineService {
 
     }//EoM
 
+    
+    public void loadPolicyModel() {    
+        
+    }
+    
     private synchronized void setSession(KieSession session) {
         this.ksession = session;
     }
