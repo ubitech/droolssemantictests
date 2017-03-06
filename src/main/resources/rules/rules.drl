@@ -2,7 +2,7 @@ package eu.paasword.drools;
 
 import eu.paasword.drools.Util;
 
-rule "Class Transitiveness Inference"
+rule "inference-1-Class Transitiveness Inference"
 when
     $clazz: Clazz( parent != null , parent.parent != null  ) 
     not ( exists(  Clazz( name==$clazz.name , parent == $clazz.parent.parent ) ) )
@@ -13,7 +13,7 @@ then
 end
 
 
-rule "Supertype Inheritance Inference"
+rule "inference-2-Supertype Inheritance Inference"
 when
 
     $instance: InstanceOfClazz( clazz.parent !=null   ) 
@@ -25,7 +25,7 @@ then
 end
 
 
-rule "Consistency Checking of Knowledge Triples based on Domain Restrictions"
+rule "inference-3-Consistency Checking of Knowledge Triples based on Domain Restrictions"
 when
     $triple: KnowledgeTriple() 
     not ( exists(  InstanceOfClazz( name == $triple.subject.name , clazz == $triple.predicate.domain ) ) )
@@ -34,7 +34,7 @@ then
     retract($triple);
 end
 
-rule "Consistency Checking of Knowledge Triples based on Range Restrictions"
+rule "inference-4-Consistency Checking of Knowledge Triples based on Range Restrictions"
 when
     $triple: KnowledgeTriple() 
     not ( exists(  InstanceOfClazz( name == $triple.object.name  , clazz == $triple.predicate.range  ) ) )
@@ -44,16 +44,18 @@ then
 end
 
 
-rule "Consistency Checking of Sub-Property Definition based on Domain Restrictions"
+rule "inference-5-Consistency Checking of Sub-Property Definition based on Domain Restrictions"
 when
     $op: ObjectProperty( parent != null ) 
     eval ( Util.isClassSubclassOfClass($op.getDomain(), $op.getParent().getDomain() ) == false )
 then
     System.out.println( "Modelling Error! Invalid Object Sub-Property based on Domain Restrictions: " + $op );
+    LogicalError error = new LogicalError("Modelling Error! Invalid Object Sub-Property based on Domain Restrictions: " + $op );
     retract($op);
+    insert(error);
 end
 
-rule "Consistency Checking of Sub-Property Definition based on Range Restrictions"
+rule "inference-6-Consistency Checking of Sub-Property Definition based on Range Restrictions"
 when
     $op: ObjectProperty( parent != null ) 
     eval ( Util.isClassSubclassOfClass($op.getRange(), $op.getParent().getRange() ) == false )
@@ -63,7 +65,7 @@ then
 end
 
 
-rule "Knowledge Expansion through Range Generalization (make use of Supertype inheritance)"
+rule "inference-7-Knowledge Expansion through Range Generalization (make use of Supertype inheritance)"
 when
     $triple: KnowledgeTriple() 
     $objectinstance: InstanceOfClazz(name == $triple.object.name, clazz != $triple.object.clazz )
@@ -79,7 +81,7 @@ then
 end
 
 
-rule "Knowledge Expansion through Domain Generalization (make use of Supertype inheritance)"
+rule "inference-8-Knowledge Expansion through Domain Generalization (make use of Supertype inheritance)"
 when
     $triple: KnowledgeTriple() 
     $subjectinstance: InstanceOfClazz(name == $triple.subject.name, clazz != $triple.subject.clazz )
@@ -95,7 +97,7 @@ then
 end
 
 
-rule "Knowledge Expansion through Transitive Property Interpretation"
+rule "inference-9-Knowledge Expansion through Transitive Property Interpretation"
 when
     $pred: ObjectProperty(transitive == true )
     $triple1: KnowledgeTriple( predicate == $pred , $subject1: subject , $object1: object ) 
@@ -113,7 +115,7 @@ then
 end
 
 
-rule "Knowledge Expansion through Sub-Property Generalization"
+rule "inference-10-Knowledge Expansion through Sub-Property Generalization"
 when
     $pred: ObjectProperty( parent != null )
     $triple: KnowledgeTriple( predicate == $pred , $subject1: subject , $object1: object ) 

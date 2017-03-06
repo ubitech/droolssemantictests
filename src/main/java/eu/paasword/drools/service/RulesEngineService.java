@@ -2,6 +2,7 @@ package eu.paasword.drools.service;
 
 import eu.paasword.drools.Clazz;
 import eu.paasword.drools.InstanceOfClazz;
+import eu.paasword.drools.LogicalError;
 import static eu.paasword.drools.config.Initializer.KIE_BASE_MODEL_PREFIX;
 import static eu.paasword.drools.config.Initializer.KNOWLEDGEBASE_PREFIX;
 import static eu.paasword.drools.config.Initializer.PACKAGE_NAME;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -31,6 +33,10 @@ import org.kie.api.builder.model.KieSessionModel;
 import org.kie.api.conf.EventProcessingOption;
 import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.KieSession;
+import org.kie.api.runtime.ObjectFilter;
+import org.kie.api.runtime.rule.AgendaFilter;
+import org.kie.api.runtime.rule.FactHandle;
+import org.kie.api.runtime.rule.Match;
 import org.kie.internal.io.ResourceFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,6 +60,8 @@ public class RulesEngineService {
 
     @Value("${ontology.path}")
     private String ontologypath;
+    @Value("${rules.path}")
+    private String rulespath;
 
     @Autowired
     public RulesEngineService() {
@@ -87,7 +95,7 @@ public class RulesEngineService {
         kieFileSystem.writeKModuleXML(kieModuleModel.toXML());
         logger.log(java.util.logging.Level.INFO, "kieModuleModel--ToXML\n{0}", kieModuleModel.toXML());
         //adding rules
-        addPolicyRules();
+        addRules();
         logger.info("kieBuilder.buildAll()");
         kieBuilder.buildAll();
         //
@@ -106,7 +114,6 @@ public class RulesEngineService {
     }//ΕοΜ    
 
     public void loadOntology() {
-
         Map<String, Object> intiorphanclassobjectmap = new HashMap<>();
         Map<String, Object> intermediateclassobjectmap = new HashMap<>();
         Map<String, Object> finalclassobjectmap = new HashMap<>();
@@ -114,11 +121,10 @@ public class RulesEngineService {
         Map<String, Object> initopobjectmap = new HashMap<>();
         Map<String, Object> intermediateopobjectmap = new HashMap<>();
         Map<String, Object> finalopobjectmap = new HashMap<>();
-
         try {
             /*
             *   LOAD CLASSES
-            */
+             */
             //Fetch all Classes that are orphan
             Stream<String> stream = Files.lines(Paths.get(ontologypath));
             intiorphanclassobjectmap = stream
@@ -149,42 +155,42 @@ public class RulesEngineService {
                 finalclassobjectmap.put(ReflectionUtil.getNameOfObject(object), object);
             }
             final Map<String, Object> temp3 = finalclassobjectmap;
-            logger.info("Classes: ");
+            logger.info("\nClasses: ");
             finalclassobjectmap.values().forEach(System.out::println);
 
             /*
             *   LOAD CLASS INSTANCES
-            */
+             */
             Stream<String> stream3 = Files.lines(Paths.get(ontologypath));
             finalinstanceobjectmap = stream3
                     .filter(line -> !line.startsWith("#") && !line.trim().equalsIgnoreCase("") && ((line.split(",")[0]).trim().equalsIgnoreCase("IoC") || (line.split(",")[0]).trim().equalsIgnoreCase("InstanceOfClass"))) //&& (line.split(",")[2]).trim().equalsIgnoreCase("null")
-                    .map(line -> ReflectionUtil.createInstanceOfClazz(ReflectionUtil.getInstanceLabelFromLine(line) , temp3.get(ReflectionUtil.getInstanceClassLabelFromLine(line)) )  )
-                    .collect(Collectors.toMap(o -> ReflectionUtil.getNameOfObject(o), o -> o));            
-            
-            logger.info("Instances Of Classes: ");
-            finalinstanceobjectmap.values().forEach(System.out::println);            
-            
+                    .map(line -> ReflectionUtil.createInstanceOfClazz(ReflectionUtil.getInstanceLabelFromLine(line), temp3.get(ReflectionUtil.getInstanceClassLabelFromLine(line))))
+                    .collect(Collectors.toMap(o -> ReflectionUtil.getNameOfObject(o), o -> o));
+
+            logger.info("\nInstances Of Classes: ");
+            finalinstanceobjectmap.values().forEach(System.out::println);
+
             /*
             *   LOAD OBJECT PROPERTIES
-            */            
+             */
             Stream<String> stream4 = Files.lines(Paths.get(ontologypath));
             initopobjectmap = stream4
                     .filter(line -> !line.startsWith("#") && !line.trim().equalsIgnoreCase("") && ((line.split(",")[0]).trim().equalsIgnoreCase("OP") || (line.split(",")[0]).trim().equalsIgnoreCase("ObjectProperty"))) //&& (line.split(",")[2]).trim().equalsIgnoreCase("null")
-                    .map(line -> ReflectionUtil.createOrphanObjectProperty(ReflectionUtil.getOPLabelFromLine(line) , temp3.get(ReflectionUtil.getDomainOPLabelFromLine(line)) , temp3.get(ReflectionUtil.getRangeOPLabelFromLine(line)) , new Boolean(ReflectionUtil.getTransitiveFromLine(line)) )  )
-                    .collect(Collectors.toMap(o -> ReflectionUtil.getNameOfObject(o), o -> o));            
-            final Map<String, Object> temp11 =  initopobjectmap;           
+                    .map(line -> ReflectionUtil.createOrphanObjectProperty(ReflectionUtil.getOPLabelFromLine(line), temp3.get(ReflectionUtil.getDomainOPLabelFromLine(line)), temp3.get(ReflectionUtil.getRangeOPLabelFromLine(line)), new Boolean(ReflectionUtil.getTransitiveFromLine(line))))
+                    .collect(Collectors.toMap(o -> ReflectionUtil.getNameOfObject(o), o -> o));
+            final Map<String, Object> temp11 = initopobjectmap;
 //            logger.info("Init Pass Of Object Properties: ");
 //            initopobjectmap.values().forEach(System.out::println);                        
-            
+
             Stream<String> stream5 = Files.lines(Paths.get(ontologypath));
             intermediateopobjectmap = stream5
-                    .filter(line -> !line.startsWith("#") && !line.trim().equalsIgnoreCase("") && ((line.split(",")[0]).trim().equalsIgnoreCase("OP") || (line.split(",")[0]).trim().equalsIgnoreCase("ObjectProperty")) && !(line.split(",")[5]).trim().equalsIgnoreCase("null") ) 
-                    .map(line -> ReflectionUtil.setParentToObjectPropertyObject( temp11.get(ReflectionUtil.getOPLabelFromLine(line)), temp11.get(ReflectionUtil.getParentalOPLabelFromLine(line)) )  )
-                    .collect(Collectors.toMap(o -> ReflectionUtil.getNameOfObject(o), o -> o));            
-            final Map<String, Object> temp12 =  intermediateopobjectmap;           
+                    .filter(line -> !line.startsWith("#") && !line.trim().equalsIgnoreCase("") && ((line.split(",")[0]).trim().equalsIgnoreCase("OP") || (line.split(",")[0]).trim().equalsIgnoreCase("ObjectProperty")) && !(line.split(",")[5]).trim().equalsIgnoreCase("null"))
+                    .map(line -> ReflectionUtil.setParentToObjectPropertyObject(temp11.get(ReflectionUtil.getOPLabelFromLine(line)), temp11.get(ReflectionUtil.getParentalOPLabelFromLine(line))))
+                    .collect(Collectors.toMap(o -> ReflectionUtil.getNameOfObject(o), o -> o));
+            final Map<String, Object> temp12 = intermediateopobjectmap;
 //            logger.info("Intermediate Object Properties: ");
 //            intermediateopobjectmap.values().forEach(System.out::println);                
-            
+
             //Create Final list
             finalopobjectmap = temp11.values().stream()
                     .filter(clazz -> !temp12.containsKey(ReflectionUtil.getNameOfObject(clazz)))
@@ -194,11 +200,42 @@ public class RulesEngineService {
                 finalopobjectmap.put(ReflectionUtil.getNameOfObject(object), object);
             }
             final Map<String, Object> temp13 = finalclassobjectmap;
-            logger.info("Object Properties: ");
-            finalopobjectmap.values().forEach(System.out::println);            
-            
+            logger.info("\nObject Properties: ");
+            finalopobjectmap.values().forEach(System.out::println);
+
+            synchronized (ksession) {
+                finalclassobjectmap.values().forEach(ksession::insert);
+                finalinstanceobjectmap.values().forEach(ksession::insert);
+                finalopobjectmap.values().forEach(ksession::insert);
+                //fire the rule to check logical consistency of triples
+                ksession.fireAllRules(new AgendaFilter() {
+                    public boolean accept(Match match) {
+                        String rulename = match.getRule().getName();
+                        if (rulename.startsWith("inference")) {
+                            return true;
+                        }
+                        return false;
+                    }
+                });
+                //handle logical errors
+                List<LogicalError> errors = new ArrayList<>();
+
+                for (FactHandle handle : ksession.getFactHandles(new ObjectFilter() {
+                    public boolean accept(Object object) {
+                        if (LogicalError.class.equals(object.getClass())) {
+                            return true;
+                        }
+                        return false;
+                    }
+                })) {
+                    errors.add((LogicalError) ksession.getFactHandle(handle));
+                }
+                logger.info("Amount of Logical Errors: " + errors.size());
+            }//synchronized
+
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.severe("Structural Errors During Ontology Parsing");
+//            e.printStackTrace();
         }
 
     }//EoM
@@ -211,39 +248,43 @@ public class RulesEngineService {
         return this.ksession;
     }
 
-    public void addPolicyRules() {
+    private void addRules() {
         logger.info("Converting Rules to production memory");
         String knowledgebasename = KNOWLEDGEBASE_PREFIX + "default";   //runningapplication.getId()
         String drlPath4deployment = RULESPACKAGE + "/" + knowledgebasename + "/" + knowledgebasename + ".drl";
         try {
             String current_dir = System.getProperty("user.dir");
             Path policyPackagePath = Paths.get(current_dir + "/" + RULESPACKAGE + "/" + knowledgebasename);
-            String data = ""
-                    + "package eu.paasword.drools;\n"
-                    + "\n"
-                    + "import eu.paasword.drools.Util;\n"
-                    + "\n"
-                    + "rule \"Class Transitiveness Inference\"\n"
-                    + "when\n"
-                    + "    $clazz: Clazz( parent != null , parent.parent != null  ) \n"
-                    + "    not ( exists(  Clazz( name==$clazz.name , parent == $clazz.parent.parent ) ) )\n"
-                    + "then\n"
-                    + "    System.out.println( \"Class Transitiveness --> New Class has to be created with name: \"+ $clazz.getName() +\" and parent: \"+$clazz.getParent().getParent().getName() );\n"
-                    + "    Clazz newclazz = new Clazz($clazz.getName(),$clazz.getParent().getParent());\n"
-                    + "    insert(newclazz);\n"
-                    + "end\n"
-                    + "\n"
-                    + "\n"
-                    + "rule \"Supertype Inheritance Inference\"\n"
-                    + "when\n"
-                    + "\n"
-                    + "    $instance: InstanceOfClazz( clazz.parent !=null   ) \n"
-                    + "    not ( exists(  InstanceOfClazz( name==$instance.name , clazz == clazz.parent ) ) )\n"
-                    + "then\n"
-                    + "    System.out.println( \"Supertype Inheritance --> New InstanceOfClass has to be created with name: \"+ $instance.getName() +\" and class: \"+$instance.getClazz().getParent().getName() );\n"
-                    + "    InstanceOfClazz newinstanceofclazz = new InstanceOfClazz($instance.getName(),$instance.getClazz().getParent());\n"
-                    + "    insert(newinstanceofclazz);\n"
-                    + "end";
+            String data = "";
+            //1st add default rules
+            data += getDefaultRulesFromFile();
+
+//            String data = ""
+//                    + "package eu.paasword.drools;\n"
+//                    + "\n"
+//                    + "import eu.paasword.drools.Util;\n"
+//                    + "\n"
+//                    + "rule \"Class Transitiveness Inference\"\n"
+//                    + "when\n"
+//                    + "    $clazz: Clazz( parent != null , parent.parent != null  ) \n"
+//                    + "    not ( exists(  Clazz( name==$clazz.name , parent == $clazz.parent.parent ) ) )\n"
+//                    + "then\n"
+//                    + "    System.out.println( \"Class Transitiveness --> New Class has to be created with name: \"+ $clazz.getName() +\" and parent: \"+$clazz.getParent().getParent().getName() );\n"
+//                    + "    Clazz newclazz = new Clazz($clazz.getName(),$clazz.getParent().getParent());\n"
+//                    + "    insert(newclazz);\n"
+//                    + "end\n"
+//                    + "\n"
+//                    + "\n"
+//                    + "rule \"Supertype Inheritance Inference\"\n"
+//                    + "when\n"
+//                    + "\n"
+//                    + "    $instance: InstanceOfClazz( clazz.parent !=null   ) \n"
+//                    + "    not ( exists(  InstanceOfClazz( name==$instance.name , clazz == clazz.parent ) ) )\n"
+//                    + "then\n"
+//                    + "    System.out.println( \"Supertype Inheritance --> New InstanceOfClass has to be created with name: \"+ $instance.getName() +\" and class: \"+$instance.getClazz().getParent().getName() );\n"
+//                    + "    InstanceOfClazz newinstanceofclazz = new InstanceOfClazz($instance.getName(),$instance.getClazz().getParent());\n"
+//                    + "    insert(newinstanceofclazz);\n"
+//                    + "end";
             Files.createDirectories(policyPackagePath);
             FileOutputStream out = new FileOutputStream(current_dir + "/" + drlPath4deployment);
             out.write(data.getBytes());
@@ -255,6 +296,16 @@ public class RulesEngineService {
             ex.printStackTrace();
         }
     }//EoM    
+
+    private String getDefaultRulesFromFile() {
+        String ret = "";
+        try {
+            ret = new String(Files.readAllBytes(Paths.get(rulespath)));
+        } catch (IOException ex) {
+            Logger.getLogger(RulesEngineService.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return ret;
+    }
 
     public void handleRequest() {
 
