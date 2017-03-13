@@ -1,6 +1,7 @@
 package eu.paasword.drools.util;
 
 import eu.paasword.drools.Clazz;
+import eu.paasword.drools.InstanceOfClazz;
 import eu.paasword.drools.ObjectProperty;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -70,6 +71,24 @@ public class ReflectionUtil {
         return ret;
     }//EoM      
     
+    public static String getKTDomainFromLine(String line) {
+        String ret = "";
+        ret = (line.split(",")[1]).trim().replaceAll(" ", "_");
+        return ret;
+    }//EoM     
+    
+    public static String getKTObjectPropertyFromLine(String line) {
+        String ret = "";
+        ret = (line.split(",")[2]).trim().replaceAll(" ", "_");
+        return ret;
+    }//EoM         
+    
+    public static String getKTRangeFromLine(String line) {
+        String ret = "";
+        ret = (line.split(",")[3]).trim().replaceAll(" ", "_");
+        return ret;
+    }//EoM         
+    
     public static Object createOrphanClazz(String label) {
         Object retobject = null;
         try {
@@ -119,6 +138,17 @@ public class ReflectionUtil {
         return retobject;
     }//EoM    
 
+    public static Object createIKnowledgeTriple(Object domainioc,Object objectproperty,Object rangeioc) {
+        Object retobject = null;
+        try {
+            Class instanceofclass = Class.forName("eu.paasword.drools.KnowledgeTriple");
+            retobject = instanceofclass.getDeclaredConstructor(InstanceOfClazz.class, ObjectProperty.class,InstanceOfClazz.class).newInstance(domainioc, objectproperty,rangeioc);
+        } catch (ClassNotFoundException | NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+            logger.log(Level.SEVERE, null, ex);
+        }
+        return retobject;
+    }//EoM       
+    
     public static Object createOrphanObjectProperty(String label, Object domain, Object range, boolean transitive) {
         Object retobject = null;
         try {

@@ -121,6 +121,8 @@ public class RulesEngineService {
         Map<String, Object> initopobjectmap = new HashMap<>();
         Map<String, Object> intermediateopobjectmap = new HashMap<>();
         Map<String, Object> finalopobjectmap = new HashMap<>();
+        List<Object> finalktriplesobjectlist = new ArrayList<>();
+
         try {
             /*
             *   LOAD CLASSES
@@ -154,9 +156,9 @@ public class RulesEngineService {
             for (Object object : intermediateclassobjectmap.values()) {
                 finalclassobjectmap.put(ReflectionUtil.getNameOfObject(object), object);
             }
-            final Map<String, Object> temp3 = finalclassobjectmap;
-            logger.info("\nClasses: ");
-            finalclassobjectmap.values().forEach(System.out::println);
+            final Map<String, Object> temp3 = finalclassobjectmap;              //FINAL CLASSES
+//            logger.info("\nClasses: ");
+//            finalclassobjectmap.values().forEach(System.out::println);
 
             /*
             *   LOAD CLASS INSTANCES
@@ -167,8 +169,10 @@ public class RulesEngineService {
                     .map(line -> ReflectionUtil.createInstanceOfClazz(ReflectionUtil.getInstanceLabelFromLine(line), temp3.get(ReflectionUtil.getInstanceClassLabelFromLine(line))))
                     .collect(Collectors.toMap(o -> ReflectionUtil.getNameOfObject(o), o -> o));
 
-            logger.info("\nInstances Of Classes: ");
-            finalinstanceobjectmap.values().forEach(System.out::println);
+            final Map<String, Object> temp4 = finalinstanceobjectmap;              //FINAL IOC            
+
+//            logger.info("\nInstances Of Classes: ");
+//            finalinstanceobjectmap.values().forEach(System.out::println);
 
             /*
             *   LOAD OBJECT PROPERTIES
@@ -178,40 +182,62 @@ public class RulesEngineService {
                     .filter(line -> !line.startsWith("#") && !line.trim().equalsIgnoreCase("") && ((line.split(",")[0]).trim().equalsIgnoreCase("OP") || (line.split(",")[0]).trim().equalsIgnoreCase("ObjectProperty"))) //&& (line.split(",")[2]).trim().equalsIgnoreCase("null")
                     .map(line -> ReflectionUtil.createOrphanObjectProperty(ReflectionUtil.getOPLabelFromLine(line), temp3.get(ReflectionUtil.getDomainOPLabelFromLine(line)), temp3.get(ReflectionUtil.getRangeOPLabelFromLine(line)), new Boolean(ReflectionUtil.getTransitiveFromLine(line))))
                     .collect(Collectors.toMap(o -> ReflectionUtil.getNameOfObject(o), o -> o));
-            final Map<String, Object> temp11 = initopobjectmap;
+            final Map<String, Object> temp5 = initopobjectmap;
 //            logger.info("Init Pass Of Object Properties: ");
 //            initopobjectmap.values().forEach(System.out::println);                        
 
             Stream<String> stream5 = Files.lines(Paths.get(ontologypath));
             intermediateopobjectmap = stream5
                     .filter(line -> !line.startsWith("#") && !line.trim().equalsIgnoreCase("") && ((line.split(",")[0]).trim().equalsIgnoreCase("OP") || (line.split(",")[0]).trim().equalsIgnoreCase("ObjectProperty")) && !(line.split(",")[5]).trim().equalsIgnoreCase("null"))
-                    .map(line -> ReflectionUtil.setParentToObjectPropertyObject(temp11.get(ReflectionUtil.getOPLabelFromLine(line)), temp11.get(ReflectionUtil.getParentalOPLabelFromLine(line))))
+                    .map(line -> ReflectionUtil.setParentToObjectPropertyObject(temp5.get(ReflectionUtil.getOPLabelFromLine(line)), temp5.get(ReflectionUtil.getParentalOPLabelFromLine(line))))
                     .collect(Collectors.toMap(o -> ReflectionUtil.getNameOfObject(o), o -> o));
             final Map<String, Object> temp12 = intermediateopobjectmap;
 //            logger.info("Intermediate Object Properties: ");
 //            intermediateopobjectmap.values().forEach(System.out::println);                
 
             //Create Final list
-            finalopobjectmap = temp11.values().stream()
+            finalopobjectmap = temp5.values().stream()
                     .filter(clazz -> !temp12.containsKey(ReflectionUtil.getNameOfObject(clazz)))
                     .collect(Collectors.toMap(o -> ReflectionUtil.getNameOfObject(o), o -> o));
             //append non orphan
             for (Object object : intermediateopobjectmap.values()) {
                 finalopobjectmap.put(ReflectionUtil.getNameOfObject(object), object);
             }
-            final Map<String, Object> temp13 = finalclassobjectmap;
-            logger.info("\nObject Properties: ");
-            finalopobjectmap.values().forEach(System.out::println);
+            final Map<String, Object> temp6 = finalopobjectmap;              //FINAL OBJECT PROPERTIES
+//            logger.info("\nObject Properties: ");
+//            finalopobjectmap.values().forEach(System.out::println);
 
+
+            /*
+            *   LOAD KNOWLEDGE TRIPLES
+             */
+            Stream<String> stream6 = Files.lines(Paths.get(ontologypath));
+            finalktriplesobjectlist = stream6
+                    .filter(line -> !line.startsWith("#") && !line.trim().equalsIgnoreCase("") && ((line.split(",")[0]).trim().equalsIgnoreCase("KT") || (line.split(",")[0]).trim().equalsIgnoreCase("KnowledgeTriple"))) //&& (line.split(",")[2]).trim().equalsIgnoreCase("null")
+                    .map(line -> ReflectionUtil.createIKnowledgeTriple(
+                            temp4.get(  ReflectionUtil.getKTDomainFromLine(line) ),
+                            temp6.get(  ReflectionUtil.getKTObjectPropertyFromLine(line) ),
+                            temp4.get(  ReflectionUtil.getKTRangeFromLine(line) )
+                    ))
+                    .collect(Collectors.toList());
+
+            logger.info("\nKnowledge Triples: ");
+            finalktriplesobjectlist.forEach(System.out::println);            
+            
             synchronized (ksession) {
                 finalclassobjectmap.values().forEach(ksession::insert);
                 finalinstanceobjectmap.values().forEach(ksession::insert);
                 finalopobjectmap.values().forEach(ksession::insert);
+                finalktriplesobjectlist.forEach(ksession::insert);
+                
                 //fire the rule to check logical consistency of triples
+                logger.info("Fire Once in order to get the logical errors");
+                
+                
                 ksession.fireAllRules(new AgendaFilter() {
                     public boolean accept(Match match) {
                         String rulename = match.getRule().getName();
-                        if (rulename.startsWith("inference")) {
+                        if (rulename.startsWith("inference") || rulename.startsWith("debug") || rulename.startsWith("risk") ) {
                             return true;
                         }
                         return false;
@@ -230,6 +256,7 @@ public class RulesEngineService {
                 })) {
                     errors.add((LogicalError) ksession.getFactHandle(handle));
                 }
+
                 logger.info("Amount of Logical Errors: " + errors.size());
             }//synchronized
 

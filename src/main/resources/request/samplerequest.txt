@@ -1,0 +1,45 @@
+{
+	"requestorip": "192.168.7.105",
+	"handlers": [{
+		"domainargumentinstance": "Neo",
+		"restendpoint": "http://handlers.paasword.eu/handlerPersonArea",
+		"propertyname": "hasLocation",
+		"handleridentifier": "handlerPersonArea",
+		"domainclazzname": "Person",
+		"rangeclazzname": "Area"
+	}, {
+		"domainargumentinstance": "Any Request",
+		"restendpoint": "http://handlers.paasword.eu/request2Device",
+		"propertyname": "comesFrom",
+		"handleridentifier": "Request2Device",
+		"domainclazzname": "Request",
+		"rangeclazzname": "DeviceType"
+	}, {
+		"domainargumentinstance": "Agent_Smith",
+		"restendpoint": "http://handlers.paasword.eu/handlerPersonArea",
+		"propertyname": "hasLocation",
+		"handleridentifier": "handlerPersonArea",
+		"domainclazzname": "Person",
+		"rangeclazzname": "Area"
+	}, {
+		"domainargumentinstance": "GR",
+		"restendpoint": "http://handlers.paasword.eu/handlerAreaArea",
+		"propertyname": "areaIsLocatedIn",
+		"handleridentifier": "handlerAreaArea",
+		"domainclazzname": "Area",
+		"rangeclazzname": "Area"
+	}],
+	"requestid": "7665c519-b032-4566-ab48-e90f6328a051",
+	"policies": [{
+		"policycombiningalgorithm": "urn:oasis:names:tc:xacml:3.0:rule-combining-algorithm:permit-overrides",
+		"rules": [{
+			"ruleidentifier": "rule1"
+		}, {
+			"ruleidentifier": "kitrule1"
+		}],
+		"policyidentifier": "webAccessPolicy"
+	}],
+	"actioninstance": "GET",
+	"subjectinstance": "Unauthorized",
+	"objectinstance": "com.mycompany.xerp.web.WebController.countries"
+}
